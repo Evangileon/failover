@@ -33,7 +33,9 @@
 
 //ports used for communication
 
-#define FAILOVER_SOCKET_PATH "/var/run/failover/failover.ctl"
+#define FAILOVER_SOCKET_PATH    "/var/run/failover/failover.ctl"
+#define FAILOVER_PID_PATH       "/var/run/failover/failover.pid"
+
 
 #define PORT 44444
 #define PORTNO "44444"
@@ -428,7 +430,8 @@ void receiveMessage()
 				//system("service asterisk stop");
 				sleep(SLEEP_DUR);
 			        //I start the asterisk app and then bring up the ip
-				system("/sbin/ifup eth2");
+				// NOT neccessary right now
+                //system("/sbin/ifup eth2");
 				system("service asterisk start");
 				isMaster=1;
 				
@@ -486,7 +489,7 @@ void receiveMessage()
 	        {
 				std::cout<<"inside yes\n";
 		        //I start the asterisk app and then bring up the ip
-				system("/sbin/ifup eth2");
+				//system("/sbin//ifup eth2");
 				system("/etc/init.d/asterisk start");
 				isMaster=1;
 			}
@@ -495,7 +498,7 @@ void receiveMessage()
 				std::cout<<"Asterisk problem at the other system. I am becoming the master\n";
 				
 		        //I start the asterisk app and then bring up the ip
-		        	system("/sbin/ifup eth2");
+		        	//system("/sbin/ifup eth2");
 				system("/etc/init.d/asterisk start");
 				isMaster=1;
 		        	sleep(SLEEP_DUR);
@@ -518,7 +521,7 @@ void receiveMessage()
 				//system("service asterisk stop");
 				sleep(SLEEP_DUR);
 			        //I start the asterisk app and then bring up the ip
-				system("/sbin/ifup eth2");
+				//system("/sbin/ifup eth2");
 				system("service asterisk start");
 				isMaster=1;
 				
@@ -612,6 +615,10 @@ int create_socket() {
          perror("Can not bind on unix socket");
          exit(-1);
      }
+    
+     std::ofstream pidFile(FAILOVER_PID_PATH);
+     pidFile << getpid();
+     pidFile.close();
 
      return sfd;
 }
@@ -630,18 +637,25 @@ static void sig_term_handler(int signum) {
     //(*old_handler)(signum);
     
     unlink(FAILOVER_SOCKET_PATH);
-    exit(0);
+    exit(signum + 128);
 }
 
 static void sig_int_handler(int signum) {
 
     unlink(FAILOVER_SOCKET_PATH);
-    exit(0);
+    exit(signum + 128);
 }
 
 int main(int argc, char *argv[])
 {
-	struct sigaction term_act;
+    int test = 0;
+	if(1 < argc) {
+        if(0 == strcmp(argv[1], "-x")) {
+            test = 1;
+        }
+    }
+    
+    struct sigaction term_act;
     struct sigaction int_act;
 
     memset(&term_act, 0, sizeof(term_act));
@@ -670,6 +684,11 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    if(test) {
+        unlink(FAILOVER_SOCKET_PATH);
+        return 0;
+    }
+
     isMaster = 1;
 	if(!isMaster)
 	{
@@ -684,7 +703,7 @@ int main(int argc, char *argv[])
 	else
 	{
 		//system("/sbin/ifup eth2");
-		//system("/etc/init.d/asterisk start");
+		system("/etc/init.d/asterisk start");
 		first_time_recv=0;
 		first_time=1;
 		initial_exec=1;

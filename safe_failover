@@ -35,7 +35,6 @@ PRIORITY=0
 
 message() {
 	echo "$1" >&2
-    B
 	if test "x$SYSLOG" != "x" ; then
 	    logger -p "${SYSLOG}.warn" -t safe_failover[$$] "$1"
 	fi
@@ -46,7 +45,7 @@ message() {
 
 # Check if Failover is already running.  If it is, then bug out, because
 # starting safe_failover when Failover is running is very bad.
-VERSION=`${FAILOVERBINDIR}/failover  2>/dev/null`
+VERSION=`${FAILOVERBINDIR}/failover -x 2>/dev/null`
 if test "`echo $VERSION | cut -c 1-8`" = "Failover" ; then
 	message "Failover is already running.  $0 will exit now."
 	exit 1
@@ -154,7 +153,7 @@ run_failover()
 			cd /tmp
 			stty sane < /dev/${TTY}
 			#nice -n $PRIORITY ${FAILOVERBINDIR}/failover -f ${CLIARGS} ${ASTARGS} > /dev/${TTY} 2>&1 < /dev/${TTY}
-		    nice $PRIORITY ${FAILOVERBINDIR}/failover > /dev/${TTY} 2>&1 < /dev/${TTY}
+		    nice -n $PRIORITY ${FAILOVERBINDIR}/failover > /dev/${TTY} 2>&1 < /dev/${TTY}
         else
 			cd /tmp
 			nice -n $PRIORITY ${FAILOVERBINDIR}/failover
