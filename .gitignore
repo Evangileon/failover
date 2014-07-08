@@ -1,2 +1,3 @@
 masterfail
 *.log
+*.o

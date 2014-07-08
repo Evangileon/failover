@@ -1,44 +1,51 @@
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <list>
-#include <ctime>
-#include <string>
-#include <string.h>
-#include <time.h>
+#include<fstream>
+#include<iostream>
+#include<sstream>
+#include<stdio.h>
+#include<stdlib.h>
+#include<limits.h>
+#include<unistd.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<netdb.h>
+#include<arpa/inet.h>
+#include<list>
+#include<ctime>
+#include<string>
+#include<string.h>
+#include<time.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <errno.h>
-#include <map>
-#include <queue>
-#include <cstdatomic>
-#include <algorithm>
-#include <math.h>
-#include <thread>
-#include <error.h>
-#include <ctime>
+#include<map>
+#include<queue>
+#include<cstdatomic>
+#include<algorithm>
+#include<math.h>
+#include<thread>
+#include<error.h>
+#include<ctime>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/select.h>
-
-#include "util.h"
-#include "net_util.h"
-#include "heartbeat.h"
 
 //ports used for communication
 
-#include "config.h"
+#define FAILOVER_SOCKET_PATH    "/var/run/failover/failover.ctl"
+#define FAILOVER_PID_PATH       "/var/run/failover/failover.pid"
+
+
+#define PORT 44444
+#define PORTNO "44444"
+#define SERVER_ADDR "10.176.15.103"
+#define SLEEP_DUR 5
+#define RECV_BUF_SIZE 256
+#define MAX_ERR_COUNT 100
+#define MAX_DEFUNCT_COUNT 100
+#define MAX_CONN_COUNT 50
+#define TIMEOUT_DUR 15
 
 void receiveMessage();
  
@@ -154,6 +161,7 @@ void sendMessage()
 	int zombiecount=0;
 	int asFailure=0;
 	int ethWorking=0;
+
 	
 	while(1)
 	{
@@ -376,34 +384,33 @@ void receiveMessage()
 	    char MyHostNamee[_POSIX_HOST_NAME_MAX + 1];
 	    gethostname(MyHostNamee,sizeof MyHostNamee);
 	
-        sockfdq = get_any_tcp_connection_ready(PORT, MAX_CONN_COUNT); 
-        if(sockfdq < 0) {
-            ERROR("%s\n", __LINE__);
-        }
-	    
-        int getcount(0);
+	
+	    sockfdq = socket(AF_INET, SOCK_STREAM, 0);
+	    if (sockfdq < 0) 
+	    std::cout<<"ERROR opening socket\n";
+	    bzero((char *) &serv_addr, sizeof(serv_addr));
+	    portno = PORT;
+	    serv_addr.sin_family = AF_INET;
+	    serv_addr.sin_addr.s_addr = INADDR_ANY;
+	    serv_addr.sin_port = htons(portno);
+	    if (bind(sockfdq, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
+	    	std::cout<<"ERROR on binding\n";
+	    listen(sockfdq,MAX_CONN_COUNT);
+	    int getcount(0);
 	 	int fail_count=0;
 		//always listening on the port to read the messages
-	    
-        fd_set rfds;
-        clilen = sizeof(cli_addr);
+		
+		clilen = sizeof(cli_addr);
+		sockfd = accept(sockfdq, (struct sockaddr *) &cli_addr, &clilen);
+		if (sockfd< 0) 
+			std::cout<<"ERROR on accept\n";
+		bzero(buffer,RECV_BUF_SIZE);
+		close(sockfdq);
+		std::thread send(sendMessage);
+		send.detach();
 
-	    int iResult = select_with_timeout(sockfdq, &rfds, RECEIVE_TIMEOUT);
-        if(iResult < 0) {
-            perror("select");
-            ERROR("after select_with_timeout\n");
-        } else if(iResult ==0) {
-            // time out 
-        } else /*(iResult > 0)*/ {
-            sockfd = accept(sockfdq, (struct sockaddr *) &cli_addr, &clilen);
-		    if (sockfd< 0) {
-			    perror("ERROR on accept");
-            }
-		    bzero(buffer,RECV_BUF_SIZE);
-		    close(sockfdq);
-		    std::thread send(sendMessage);
-		    send.detach();
-        }
+		//optval = 1;
+		//setsockopt(sockfdq, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
 	}
 	
 	tv.tv_sec = TIMEOUT_DUR;
@@ -441,12 +448,20 @@ void receiveMessage()
 				char MyHostNamee[_POSIX_HOST_NAME_MAX + 1];
 			 	gethostname(MyHostNamee,sizeof MyHostNamee);
 			
-                sockfdq = get_any_tcp_connection_ready(PORT, MAX_CONN_COUNT);
-                if(sockfdq < 0) {
-                    perror("error on get ready");
-                    ERROR("%s\n", __LINE__);
-                }
-
+			
+			    sockfdq = socket(AF_INET, SOCK_STREAM, 0);
+			    if (sockfdq < 0) 
+			    	std::cout<<"ERROR opening socket\n";
+			    optval = 1;
+			    setsockopt(sockfdq, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+			    bzero((char *) &serv_addr, sizeof(serv_addr));
+			    portno = PORT;
+			    serv_addr.sin_family = AF_INET;
+			    serv_addr.sin_addr.s_addr = INADDR_ANY;
+			    serv_addr.sin_port = htons(portno);
+			    while (bind(sockfdq, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
+			    	continue;
+			    listen(sockfdq,MAX_CONN_COUNT);
 				std::cout<<"waiting on accept\n\n";
 				sockfd = accept(sockfdq, (struct sockaddr *) &cli_addr, &clilen);
 				if (sockfd< 0) 
@@ -524,12 +539,23 @@ void receiveMessage()
 				char MyHostNamee[_POSIX_HOST_NAME_MAX + 1];
 			 	gethostname(MyHostNamee,sizeof MyHostNamee);
 			
-                int sockfdq = get_any_tcp_connection_ready(PORT, MAX_CONN_COUNT);
-                if(sockfdq < 0) {
-                    ERROR("sock < 0 %s\n", __LINE__);
+			
+			    sockfdq = socket(AF_INET, SOCK_STREAM, 0);
+			    if (sockfdq < 0) 
+			    	std::cout<<"ERROR opening socket\n";
+			    
+			    optval = 1;
+			    setsockopt(sockfdq, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+			    bzero((char *) &serv_addr, sizeof(serv_addr));
+			    portno = PORT;
+			    serv_addr.sin_family = AF_INET;
+			    serv_addr.sin_addr.s_addr = INADDR_ANY;
+			    serv_addr.sin_port = htons(portno);
+			    while (bind(sockfdq, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
+				    continue;
                 }
-                
-                sockfd = accept(sockfdq, (struct sockaddr *) &cli_addr, &clilen);
+			    listen(sockfdq,MAX_CONN_COUNT);
+				sockfd = accept(sockfdq, (struct sockaddr *) &cli_addr, &clilen);
 				if (sockfd< 0) { 
 					std::cout<<"ERROR on accept\n";
                 }
@@ -567,64 +593,7 @@ void receiveMessage()
 	
 }
 
-int receive_message_once() {
-    int ret = 0;
 
-	int n;
-	int sockfdq, portno;
-	socklen_t clilen;
-	char *buffer=new char[RECV_BUF_SIZE];
-	struct timeval tv;
-    char MyHostNamee[_POSIX_HOST_NAME_MAX + 1];	    
-    gethostname(MyHostNamee,sizeof MyHostNamee);
-	
-    sockfdq = get_any_tcp_connection_ready(PORT, MAX_CONN_COUNT);
-    if(sockfdq < 0) {
-        ERROR("get connection readt %s\n", __LINE__);
-    }
-
-    int cli_sockfd_once = -1;
-    struct sockaddr_storage cli_addr_once;
-    memset(&cli_addr_once, 0, sizeof(cli_addr_once));
-    socklen_t clilen_once = 0;
-    char ipstr[INET6_ADDRSTRLEN + 1];
-    int port;
-
-    fd_set rfds;
-	int iResult = select_with_timeout(sockfdq, &rfds, RECEIVE_ONCE_TIMEOUT);
-    
-    if(iResult < 0) {
-        perror("after select_with_timeout");
-    } else if(iResult == 0) {
-        ret = 0; // This is indeed the master
-        goto fail_once;
-    } else /*Result > 0*/ {
-        ret = -1;
-        if(!FD_ISSET(sockfdq, &rfds)) {
-            goto fail_once;
-        }
-        // need to confirm the connect is by 103
-        clilen_once = sizeof(cli_addr_once);
-        cli_sockfd_once = accept(sockfdq, (struct sockaddr *) &cli_addr_once, &clilen_once);
-        if(cli_sockfd_once < 0) {
-            std::cout << "errno = " << errno << std::endl;
-            perror("connect once accept");
-        }
-
-        // get socket info
-        struct sockaddr_in *s = (struct sockaddr_in *)&cli_addr_once;
-        port = ntohs(s->sin_port);
-        inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof ipstr);
-        //std::cout << "Peer address: " << ipstr << ":" << port << std::endl;
-        std::cout << "Touched by another machine: " << ipstr << ":" << port << std::endl;;
-        std::cout << "count = " << iResult << std::endl;
-        ret = -1;
-    }
-
-fail_once:
-    close(sockfdq);
-    return ret;
-}
 
 int create_socket() {
 
@@ -718,25 +687,19 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    //int sfd = create_socket();
-    //if(-1 == sfd) {
-    //    perror("Can not create unix socket");
-    //    exit(-1);
-    //}
+    int sfd = create_socket();
+    if(-1 == sfd) {
+        perror("Can not create unix socket");
+        exit(-1);
+    }
 
-    //if(test) {
-    //    unlink(FAILOVER_SOCKET_PATH);
-    //    return 0;
-    //}
+    if(test) {
+        unlink(FAILOVER_SOCKET_PATH);
+        return 0;
+    }
 
     isMaster = 1;
     isInitMaster = isMaster;
-
-    std::thread heartbeatReceiveThread(heartbeat_receive);
-    //heartbeatReceiveThread.detach();
-    sleep(4);
-    std::thread heartbeatSendThread(heartbeat_send);
-    //heartbeatSendThread.detach();
 
 	if(!isMaster)
 	{
@@ -745,36 +708,23 @@ int main(int argc, char *argv[])
 		first_time=0;
 		first_time_recv=1;
 		std::cout<<"starting the threads"<<std::endl;
-		//std::thread receive(receiveMessage);
-		//receive.join();
+		std::thread receive(receiveMessage);
+		receive.join();
 	}
 	else
 	{
 		//system("/sbin/ifup eth2");
-        if(receive_message_once() == 0) {
-		    system("/etc/init.d/asterisk start");
-		    first_time_recv=0;
-		    first_time=1;
-		    initial_exec=1;
-		    std::cout<<"starting the threads"<<std::endl;
-		    //std::thread send(sendMessage);
-		    //send.join();
-        } else {
-            system("/etc/init.d/asterisk stop");
-		    first_time=0;
-		    first_time_recv=1;
-		    std::cout<<"starting the threads"<<std::endl;
-		    //std::thread receive(receiveMessage);
-		    //receive.join();
-        }
+		system("/etc/init.d/asterisk start");
+		first_time_recv=0;
+		first_time=1;
+		initial_exec=1;
+		std::cout<<"starting the threads"<<std::endl;
+		std::thread send(sendMessage);
+		send.join();
 	}
-    
-    std::cout << "In the end\n";
-    heartbeatSendThread.join();
-    heartbeatReceiveThread.join();
-    std::cout << "After join\n";
+
     unlink(FAILOVER_SOCKET_PATH);
-    //close(sfd);
+    close(sfd);
 	
 	return 0;
 }

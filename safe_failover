@@ -2,7 +2,7 @@
 # vim:textwidth=80:tabstop=4:shiftwidth=4:smartindent:autoindent
 
 CLIARGS="$*"				# Grab any args passed to safe_failover
-TTY=9						# TTY (if you want one) for Failover to run on
+TTY=tty9						# TTY (if you want one) for Failover to run on
 CONSOLE=yes					# Whether or not you want a console
 #NOTIFY=ben@alkaloid.net	# Who to notify about crashes
 #EXEC=/path/to/somescript	# Run this command if Failover crashes
@@ -196,9 +196,6 @@ run_failover()
 		fi
 		message "Automatically restarting Failover."
 		sleep $SLEEPSECS
-		if test "0$KILLALLMPG123" -gt "0" ; then
-			pkill -9 mpg123
-		fi
 	done
 }
 
