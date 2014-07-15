@@ -5,7 +5,9 @@
 
 #include <iostream>
 #include <string>
+#include "config.h"
 #include "util.h"
+#include "net_util.h"
 #include "statusCheck.h"
 
 using namespace std;
