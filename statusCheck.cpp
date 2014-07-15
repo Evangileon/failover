@@ -31,7 +31,7 @@ int status_receive_loop(int rfd) {
         }
 
         ret = recv(rfd, buffer, 16, 0);
-        if(ret == -1) {
+        if(ret <= 0) {
             break;
         }
         if(ret > 16) {
