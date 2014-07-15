@@ -158,6 +158,7 @@ int master_status_send_loop(int wfd) {
         string whatToSend = checkResultStr();
 		whatTosend.copy(buffer, whatToSend.length( ));
 		buffer[whatTosend.length()] = '\0';
+		cout << "message: " << buffer << endl;
 
         ret = select_write_with_timeout(wfd, &wfds, 5);
         if(ret <= 0) {
