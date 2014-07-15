@@ -13,7 +13,7 @@
 
 using namespace std;
 
-int needStatusSend = 0;
+int needStatusSend = 1;
 string whatTosend;
 
 int status_receive_loop(int rfd) {
