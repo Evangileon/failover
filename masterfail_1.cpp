@@ -35,6 +35,7 @@
 #include "util.h"
 #include "net_util.h"
 #include "heartbeat.h"
+#include "statusCheck.h"
 
 //ports used for communication
 
