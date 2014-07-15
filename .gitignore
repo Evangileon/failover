@@ -1,3 +1,4 @@
 masterfail
 *.log
 *.o
+*.out
