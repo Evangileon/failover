@@ -31,7 +31,7 @@ int status_receive_loop(int rfd) {
         }
 
         ret = recv(rfd, buffer, 16, 0);
-        if(ret != -1) {
+        if(ret == -1) {
             break;
         }
         if(ret > 16) {
@@ -45,6 +45,8 @@ int status_receive_loop(int rfd) {
         cout << "master is " << buffer << endl;
         sleep(1);
     }
+
+    cout << "End status receive loop" << endl;
 
     return ret;
 }

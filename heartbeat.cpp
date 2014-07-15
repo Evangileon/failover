@@ -32,7 +32,7 @@ int heartbeat_receive_loop(int rfd) {
         if(ret != 16) {
             break;
         }
-        cout << "recv succeed\n";
+        cout << "heartbeat recv succeed\n";
         sleep(1);
     }
 
@@ -62,7 +62,7 @@ int heartbeat_send_loop(int wfd) {
         if(ret != 16) {
             break;
         }
-        cout << "send succeed\n";
+        cout << "heartbeat send succeed\n";
     }
 
     return ret;
