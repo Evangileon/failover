@@ -1,7 +1,8 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-
+#include <strings.h>
+#include <arpa/inet.h>
 
 #include <iostream>
 #include <string>
