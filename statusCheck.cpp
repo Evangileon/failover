@@ -103,7 +103,7 @@ void status_receive() {
             // the other one is dead
             status = -1;
             needStatusSend = 0;
-            cout << "Not receive status from other\n";
+            cout << "Not receive status from master\n";
         } else {
             // nothing to do
             cout << "status receive loop\n";
@@ -119,6 +119,7 @@ heart_beat_accept_fail:
         if(status < 0) {
         }
     }
+    cout << "status receive thread end" << endl;
 }
 
 
