@@ -1,0 +1,113 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CUR_INFO	util.h	17;"	d
+DEBUG	util.h	10;"	d
+DEBUG	util.h	8;"	d
+ERROR	util.h	13;"	d
+FAILOVER_PID_PATH	config.h	6;"	d
+FAILOVER_PID_PATH	slavefail.cpp	37;"	d	file:
+FAILOVER_SOCKET_PATH	config.h	5;"	d
+FAILOVER_SOCKET_PATH	slavefail.cpp	36;"	d	file:
+HEARTBEAT_RECEIVE_PORT	config.h	20;"	d
+HEARTBEAT_SEND_PORT	config.h	21;"	d
+INFO	util.h	15;"	d
+MAX_CONN_COUNT	config.h	18;"	d
+MAX_CONN_COUNT	slavefail.cpp	47;"	d	file:
+MAX_DEFUNCT_COUNT	config.h	17;"	d
+MAX_DEFUNCT_COUNT	slavefail.cpp	46;"	d	file:
+MAX_ERR_COUNT	config.h	16;"	d
+MAX_ERR_COUNT	slavefail.cpp	45;"	d	file:
+PORT	config.h	11;"	d
+PORT	servicefailover.cpp	33;"	d	file:
+PORT	slavefail.cpp	40;"	d	file:
+PORTNO	config.h	12;"	d
+PORTNO	slavefail.cpp	41;"	d	file:
+RECEIVE_ONCE_TIMEOUT	config.h	8;"	d
+RECEIVE_TIMEOUT	config.h	9;"	d
+RECV_BUF_SIZE	config.h	15;"	d
+RECV_BUF_SIZE	slavefail.cpp	44;"	d	file:
+SERVER_ADDR	config.h	13;"	d
+SERVER_ADDR	slavefail.cpp	42;"	d	file:
+SLEEP_DUR	config.h	14;"	d
+SLEEP_DUR	slavefail.cpp	43;"	d	file:
+TIMEOUT_DUR	config.h	19;"	d
+TIMEOUT_DUR	slavefail.cpp	48;"	d	file:
+__CONFIG_H_JUN__	config.h	2;"	d
+__HEARTBEAT_H_JUN__	heartbeat.h	2;"	d
+__NET_UTIL_H_JUN__	net_util.h	2;"	d
+__UTIL_H_JUN__	util.h	2;"	d
+acceptingConn	masterfail_1.cpp	/^int acceptingConn=0;$/;"	v
+acceptingConn	slavefail.cpp	/^int acceptingConn=0;$/;"	v
+connect_nonblock	net_util.cpp	/^int connect_nonblock(struct sockaddr_in* sa, int sock, int timeout) {   $/;"	f
+connect_nonblock	non_block.c	/^int connect_nonblock(struct sockaddr_in sa, int sock, int timeout) {   $/;"	f
+create_connection	net_util.h	11;"	d
+create_socket	masterfail_1.cpp	/^int create_socket() {$/;"	f
+create_socket	slavefail.cpp	/^int create_socket() {$/;"	f
+custom_sa_handler	masterfail_1.cpp	/^typedef void (*custom_sa_handler)(int);$/;"	t	file:
+custom_sa_handler	slavefail.cpp	/^typedef void (*custom_sa_handler)(int);$/;"	t	file:
+first_time	masterfail_1.cpp	/^int first_time=1;$/;"	v
+first_time	slavefail.cpp	/^int first_time=1;$/;"	v
+first_time_recv	masterfail_1.cpp	/^int first_time_recv=0;$/;"	v
+first_time_recv	slavefail.cpp	/^int first_time_recv=0;$/;"	v
+get1_in_addr	masterfail_1.cpp	/^void *get1_in_addr(struct sockaddr *sa)$/;"	f
+get1_in_addr	servicefailover.cpp	/^void *get1_in_addr(struct sockaddr *sa)$/;"	f
+get1_in_addr	slavefail.cpp	/^void *get1_in_addr(struct sockaddr *sa)$/;"	f
+get_any_connection_ready	net_util.cpp	/^int get_any_connection_ready(int sockfd, int domain, int protocal, int port, int count) {$/;"	f
+get_any_tcp_connection_ready	net_util.cpp	/^int get_any_tcp_connection_ready(int port, int count) {$/;"	f
+get_any_tcp_connection_ready_socket	net_util.cpp	/^int get_any_tcp_connection_ready_socket(int socket, int port, int count) {$/;"	f
+heartbeat_receive	heartbeat.cpp	/^void heartbeat_receive() {$/;"	f
+heartbeat_receive_loop	heartbeat.cpp	/^int heartbeat_receive_loop(int rfd) {$/;"	f
+heartbeat_send	heartbeat.cpp	/^void heartbeat_send() {$/;"	f
+heartbeat_send_loop	heartbeat.cpp	/^int heartbeat_send_loop(int wfd) {$/;"	f
+hints1	masterfail_1.cpp	/^struct addrinfo hints1, *servinf, *q;$/;"	v	typeref:struct:addrinfo
+hints1	slavefail.cpp	/^struct addrinfo hints1, *servinf, *q;$/;"	v	typeref:struct:addrinfo
+initial_exec	masterfail_1.cpp	/^bool initial_exec=0;$/;"	v
+initial_exec	slavefail.cpp	/^bool initial_exec=0;$/;"	v
+isInitMaster	masterfail_1.cpp	/^bool isInitMaster = 0;$/;"	v
+isInitMaster	slavefail.cpp	/^bool isInitMaster = 0;$/;"	v
+isMaster	masterfail_1.cpp	/^bool isMaster=0;$/;"	v
+isMaster	slavefail.cpp	/^bool isMaster=0;$/;"	v
+main	masterfail_1.cpp	/^int main(int argc, char *argv[])$/;"	f
+main	servicefailover.cpp	/^int main(int argc, char *argv[])$/;"	f
+main	slavefail.cpp	/^int main(int argc, char *argv[])$/;"	f
+message	safe_failover	/^message() {$/;"	f
+name	servicefailover.cpp	/^char *name;$/;"	v
+needSend	heartbeat.cpp	/^int needSend = 1;$/;"	v
+numbytes	masterfail_1.cpp	/^int sockfd, numbytes;  $/;"	v
+numbytes	slavefail.cpp	/^int sockfd, numbytes;  $/;"	v
+old_act	masterfail_1.cpp	/^static struct sigaction old_act;$/;"	v	typeref:struct:sigaction	file:
+old_act	slavefail.cpp	/^static struct sigaction old_act;$/;"	v	typeref:struct:sigaction	file:
+portno	servicefailover.cpp	/^int portno;$/;"	v
+q	masterfail_1.cpp	/^struct addrinfo hints1, *servinf, *q;$/;"	v	typeref:struct:
+q	slavefail.cpp	/^struct addrinfo hints1, *servinf, *q;$/;"	v	typeref:struct:
+receiveMessage	masterfail_1.cpp	/^void receiveMessage()$/;"	f
+receiveMessage	servicefailover.cpp	/^void receiveMessage()$/;"	f
+receiveMessage	slavefail.cpp	/^void receiveMessage()$/;"	f
+receive_message_once	masterfail_1.cpp	/^int receive_message_once() {$/;"	f
+run_failover	safe_failover	/^run_failover()$/;"	f
+rv	masterfail_1.cpp	/^int rv;$/;"	v
+rv	slavefail.cpp	/^int rv;$/;"	v
+s	masterfail_1.cpp	/^char s[INET6_ADDRSTRLEN];$/;"	v
+s	slavefail.cpp	/^char s[INET6_ADDRSTRLEN];$/;"	v
+select_with_timeout	net_util.cpp	/^int select_with_timeout(int sockfdq, fd_set* rfds, int time_sec) {$/;"	f
+select_write_with_timeout	net_util.cpp	/^int select_write_with_timeout(int sockfdq, fd_set* wfds, int time_sec) {$/;"	f
+sendMessage	masterfail_1.cpp	/^void sendMessage()$/;"	f
+sendMessage	servicefailover.cpp	/^void sendMessage()$/;"	f
+sendMessage	slavefail.cpp	/^void sendMessage()$/;"	f
+sendRequest	masterfail_1.cpp	/^void sendRequest( char *reqms)$/;"	f
+sendRequest	servicefailover.cpp	/^void sendRequest( char *reqms)$/;"	f
+sendRequest	slavefail.cpp	/^void sendRequest( char *reqms)$/;"	f
+servinf	masterfail_1.cpp	/^struct addrinfo hints1, *servinf, *q;$/;"	v	typeref:struct:
+servinf	slavefail.cpp	/^struct addrinfo hints1, *servinf, *q;$/;"	v	typeref:struct:
+sig_int_handler	masterfail_1.cpp	/^static void sig_int_handler(int signum) {$/;"	f	file:
+sig_int_handler	slavefail.cpp	/^static void sig_int_handler(int signum) {$/;"	f	file:
+sig_term_handler	masterfail_1.cpp	/^static void sig_term_handler(int signum) {$/;"	f	file:
+sig_term_handler	slavefail.cpp	/^static void sig_term_handler(int signum) {$/;"	f	file:
+sockfd	masterfail_1.cpp	/^int sockfd, numbytes;  $/;"	v
+sockfd	slavefail.cpp	/^int sockfd, numbytes;  $/;"	v
+stop_recv	masterfail_1.cpp	/^int stop_recv=0;$/;"	v
+stop_recv	slavefail.cpp	/^int stop_recv=0;$/;"	v
