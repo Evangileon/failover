@@ -729,7 +729,7 @@ int main(int argc, char *argv[])
     //    return 0;
     //}
 
-    isMaster = 1;
+    isMaster = IS_MASTER;
     isInitMaster = isMaster;
 
     std::thread heartbeatReceiveThread(heartbeat_receive);
