@@ -101,10 +101,10 @@ void status_receive() {
             // the other one is dead
             status = -1;
             needStatusSend = 0;
-            cout << "The other is dead\n";
+            cout << "Not receive status from other\n";
         } else {
             // nothing to do
-            cout << "go to heartbeat receive loop\n";
+            cout << "status receive loop\n";
             int cfd = accept(sockfd, (struct sockaddr *)&cli_addr, &cli_len);
             if(cfd < 0) {
                 perror("It shouldn't be error");
@@ -168,7 +168,7 @@ int master_status_send_loop(int wfd) {
         if(ret != 16) {
             break;
         }
-        cout << "send succeed\n";
+        cout << "status sent\n";
     }
 
     return ret;
@@ -223,9 +223,9 @@ void master_status_send() {
             continue;
         }
         
-        cout << "go to send loop\n";
+        cout << "status send loop\n";
         master_status_send_loop(sockfd);
-        cout << "cease sending\n";
+        //cout << "cease sending\n";
         close(sockfd);
     }
 }
