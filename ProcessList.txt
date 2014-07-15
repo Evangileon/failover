@@ -1,0 +1,6 @@
+#enter the process name to check
+2
+#asterisk
+#asterisk.local
+/usr/sbin/asterisk
+/usr/sbin/safe_asterisk
