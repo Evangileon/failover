@@ -747,10 +747,13 @@ int main(int argc, char *argv[])
 		std::cout<<"starting the threads"<<std::endl;
 		//std::thread receive(receiveMessage);
 		//receive.join();
+		std::thread statusRecv(status_receive);
+		statusRecv.join();
 	}
 	else
 	{
 		//system("/sbin/ifup eth2");
+		std::thread statusSend(master_status_send);
         if(receive_message_once() == 0) {
 		    system("/etc/init.d/asterisk start");
 		    first_time_recv=0;
@@ -767,6 +770,7 @@ int main(int argc, char *argv[])
 		    //std::thread receive(receiveMessage);
 		    //receive.join();
         }
+        statusSend.join();
 	}
     
     std::cout << "In the end\n";
