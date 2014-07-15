@@ -122,8 +122,12 @@ heart_beat_accept_fail:
 
 string& checkResultStr() {
 	
-	int counter = system("ProcessChecker.sh");       
-	if(counter!=0) { //application is down or not fully functional
+	int counter = system("ProcessChecker.sh"); 
+	if(counter < 0) {
+		ERROR("Can not exec ProcessChecker\n");
+	}
+
+	if(counter > 0) { //application is down or not fully functional
 		cout << "Entering process down section" << endl;
 		        //system("/sbin/ifdown eth2"); // we bring down the interface and the asterisk service on the system
 		        //system("/etc/init.d/asterisk stop");        
