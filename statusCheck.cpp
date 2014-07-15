@@ -14,6 +14,7 @@
 using namespace std;
 
 int needStatusSend = 0;
+string whatTosend;
 
 int status_receive_loop(int rfd) {
     fd_set rfds;
@@ -99,7 +100,7 @@ void status_receive() {
             // timeout
             // the other one is dead
             status = -1;
-            needSend = 0;
+            needStatusSend = 0;
             cout << "The other is dead\n";
         } else {
             // nothing to do
@@ -108,7 +109,7 @@ void status_receive() {
             if(cfd < 0) {
                 perror("It shouldn't be error");
             }
-            needSend = 1;
+            needStatusSend = 1;
            	int masterStatus = status_receive_loop(cfd);
             close(cfd);
         }
@@ -120,7 +121,7 @@ heart_beat_accept_fail:
 
 
 string& checkResultStr() {
-	string whatTosend;
+	
 	int counter = system("ProcessChecker.sh");       
 	if(counter!=0) { //application is down or not fully functional
 		cout << "Entering process down section" << endl;
@@ -136,7 +137,7 @@ string& checkResultStr() {
 		whatTosend="ok";
 	}
 
-	return whatTosend
+	return whatTosend;
 }
 
 int master_status_send_loop(int wfd) {
