@@ -7,6 +7,7 @@ FAILOVER_PID_PATH	config.h	6;"	d
 FAILOVER_SOCKET_PATH	config.h	5;"	d
 HEARTBEAT_RECEIVE_PORT	config.h	20;"	d
 HEARTBEAT_SEND_PORT	config.h	21;"	d
+IS_MASTER	config.h	26;"	d
 MAX_CONN_COUNT	config.h	18;"	d
 MAX_DEFUNCT_COUNT	config.h	17;"	d
 MAX_ERR_COUNT	config.h	16;"	d
@@ -17,6 +18,8 @@ RECEIVE_TIMEOUT	config.h	9;"	d
 RECV_BUF_SIZE	config.h	15;"	d
 SERVER_ADDR	config.h	13;"	d
 SLEEP_DUR	config.h	14;"	d
+STANDBY_ADDR	config.h	23;"	d
+STATUS_PORT	config.h	24;"	d
 TIMEOUT_DUR	config.h	19;"	d
 __CONFIG_H_JUN__	config.h	2;"	d
 heartbeat_receive	heartbeat.cpp	/^void heartbeat_receive() {$/;"	f
@@ -26,6 +29,15 @@ heartbeat_send_loop	heartbeat.cpp	/^int heartbeat_send_loop(int wfd) {$/;"	f
 needSend	heartbeat.cpp	/^int needSend = 1;$/;"	v
 __HEARTBEAT_H_JUN__	heartbeat.h	2;"	d
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+create_socket	masterfail.cpp	/^int create_socket() {$/;"	f
+custom_sa_handler	masterfail.cpp	/^typedef void (*custom_sa_handler)(int);$/;"	t	file:
+main	masterfail.cpp	/^int main(int argc, char const *argv[])$/;"	f
+old_act	masterfail.cpp	/^static struct sigaction old_act;$/;"	v	typeref:struct:sigaction	file:
+receive_message_once	masterfail.cpp	/^int receive_message_once() {$/;"	f
+setup_signal_handler	masterfail.cpp	/^void setup_signal_handler() {$/;"	f
+sig_int_handler	masterfail.cpp	/^static void sig_int_handler(int signum) {$/;"	f	file:
+sig_term_handler	masterfail.cpp	/^static void sig_term_handler(int signum) {$/;"	f	file:
+standby_machine	masterfail.cpp	/^void standby_machine() {$/;"	f
 acceptingConn	masterfail_1.cpp	/^int acceptingConn=0;$/;"	v
 create_socket	masterfail_1.cpp	/^int create_socket() {$/;"	f
 custom_sa_handler	masterfail_1.cpp	/^typedef void (*custom_sa_handler)(int);$/;"	t	file:
@@ -105,6 +117,14 @@ sig_int_handler	slavefail.cpp	/^static void sig_int_handler(int signum) {$/;"	f	
 sig_term_handler	slavefail.cpp	/^static void sig_term_handler(int signum) {$/;"	f	file:
 sockfd	slavefail.cpp	/^int sockfd, numbytes;  $/;"	v
 stop_recv	slavefail.cpp	/^int stop_recv=0;$/;"	v
+checkResultStr	statusCheck.cpp	/^string& checkResultStr() {$/;"	f
+master_status_send	statusCheck.cpp	/^void master_status_send() {$/;"	f
+master_status_send_loop	statusCheck.cpp	/^int master_status_send_loop(int wfd) {$/;"	f
+needStatusSend	statusCheck.cpp	/^int needStatusSend = 1;$/;"	v
+status_receive	statusCheck.cpp	/^void status_receive() {$/;"	f
+status_receive_loop	statusCheck.cpp	/^int status_receive_loop(int rfd) {$/;"	f
+whatTosend	statusCheck.cpp	/^string whatTosend;$/;"	v
+__STATUSCHECK_H_JUN__	statusCheck.h	2;"	d
 CUR_INFO	util.h	17;"	d
 DEBUG	util.h	10;"	d
 DEBUG	util.h	8;"	d

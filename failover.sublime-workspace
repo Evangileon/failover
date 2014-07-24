@@ -4,6 +4,106 @@
 		"selected_items":
 		[
 			[
+				"inc",
+				"include"
+			],
+			[
+				"d",
+				"def	#ifndef … #define … #endif"
+			],
+			[
+				"mas",
+				"master_machine"
+			],
+			[
+				"ini",
+				"isInitMaster"
+			],
+			[
+				"is",
+				"isMaster"
+			],
+			[
+				"in",
+				"inc	#include \"…\""
+			],
+			[
+				"de",
+				"detach"
+			],
+			[
+				"status",
+				"statusSend"
+			],
+			[
+				"st",
+				"standby_machine"
+			],
+			[
+				"set",
+				"setup_signal_handler"
+			],
+			[
+				"new",
+				"new_file"
+			],
+			[
+				"r",
+				"raw_file"
+			],
+			[
+				"tr",
+				"try	Try/Except/Finally"
+			],
+			[
+				"hea",
+				"heartbeatSendThread"
+			],
+			[
+				"conne",
+				"connect_nonblock"
+			],
+			[
+				"go",
+				"goto_definition"
+			],
+			[
+				"sele",
+				"select_with_timeout"
+			],
+			[
+				"statue",
+				"statusRecv"
+			],
+			[
+				"sta",
+				"statusCheck"
+			],
+			[
+				"ST",
+				"STATUS_PORT"
+			],
+			[
+				"chec",
+				"checkResultStr"
+			],
+			[
+				"wh",
+				"whatTosend"
+			],
+			[
+				"need",
+				"needSend"
+			],
+			[
+				"IS",
+				"IS_MASTER"
+			],
+			[
+				"usi",
+				"usingt	Using statement (templated)"
+			],
+			[
 				"he",
 				"heart_beat_accept_fail"
 			],
@@ -44,53 +144,22 @@
 				"func (*Event)	func (...) {...} ʂ"
 			],
 			[
-				"sta",
-				"stage1"
-			],
-			[
-				"inc",
-				"include"
-			],
-			[
 				"ar",
 				"argv"
 			],
 			[
 				"e",
 				"extra_tag_paths"
-			],
-			[
-				"in",
-				"include"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"contents": "#include <iostream>\n#include <netinet/in.h>\n#include <arpa/inet.h>\n#include <sys/select.h>\n#include <errno.h>\n#include <strings.h>\n#include <unistd.h>\n\n#include \"util.h\"\n#include \"net_util.h\"\n#include \"config.h\"\n\nusing namespace std;\n\nint needSend = 1;\n\nint heartbeat_receive_loop(int rfd) {\n    fd_set rfds;\n    int ret = -1;\n    char buffer[16];\n\n    while(1) {\n        ret = select_with_timeout(rfd, &rfds, 2);\n        if(ret <= 0) {\n            break;\n        }\n        if(!FD_ISSET(rfd, &rfds)) {\n            break;\n        }\n\n        ret = recv(rfd, buffer, 16, 0);\n        if(ret != 16) {\n            break;\n        }\n        cout << \"recv succeed\\n\";\n        sleep(1);\n    }\n\n    return ret;\n}\n\nint heartbeat_send_loop(int wfd) {\n    fd_set wfds; \n    int ret = -1;\n    char buffer[16];\n\n    while(1) {\n        sleep(1);\n        if(!needSend) {\n            break;\n        }\n        ret = select_write_with_timeout(wfd, &wfds, 5);\n        if(ret <= 0) {\n            break;\n        }\n        if(!FD_ISSET(wfd, &wfds)) {\n            break;\n        }\n\n        ret = send(wfd, buffer, 16, MSG_NOSIGNAL);\n        DEBUG(\"errno = %d\\n\", errno);\n        if(ret != 16) {\n            break;\n        }\n        cout << \"send succeed\\n\";\n    }\n\n    return ret;\n}\n\nvoid heartbeat_receive() {\n    int sockfd;\n    int ret;\n    int status = 0;\n    fd_set rfds;\n\n    struct sockaddr_in cli_addr;\n    socklen_t cli_len;\n    cli_len = sizeof(cli_addr);\n\n    sockfd = socket(AF_INET, SOCK_STREAM, 0);\n    if ((sockfd) < 0) {\n        perror(\"ERROR opening socket\");\n        ERROR(\"%d\\n\", __LINE__);\n    }\n\n    int __jun_net_optval = 1;\n    if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &__jun_net_optval, sizeof __jun_net_optval) < 0) {\n        perror(\"errno on setsockopt\");         \n        ERROR(\"%d\\n\", __LINE__);    \n    }  \n\n    struct sockaddr_in __jun_net_serv_addr;\n    bzero((void *) &__jun_net_serv_addr, sizeof(__jun_net_serv_addr));\n    __jun_net_serv_addr.sin_family = AF_INET;\n    __jun_net_serv_addr.sin_addr.s_addr = INADDR_ANY;\n    __jun_net_serv_addr.sin_port = htons((HEARTBEAT_RECEIVE_PORT));\n    if (bind((sockfd), (struct sockaddr *) &__jun_net_serv_addr,sizeof(__jun_net_serv_addr)) < 0) {\n        perror(\"ERROR on binding, receiveMessage\");\n        ERROR(\"%d\\n\", __LINE__);\n    }\n    if(listen((sockfd),(MAX_CONN_COUNT)) < 0) {\n        perror(\"listen, receiveMessage\");\n        ERROR(\"%d\\n\", __LINE__);\n    }\n\n    \n    while(1) {\n        //sockfd = get_any_tcp_connection_ready_socket(sockfd, HEARTBEAT_RECEIVE_PORT, MAX_CONN_COUNT);\n        if(sockfd < 0) {\n            ERROR(\"%s, %d\\n\", __FILE__, __LINE__);\n        }\n\n        ret = select_with_timeout(sockfd, &rfds, 5);\n        if(ret < 0) {\n            perror(\"after select\");\n            ERROR(\"%s, %d\\n\", __FILE__, __LINE__);\n        } else if (ret == 0) {\n            // timeout\n            // the other one is dead\n            status = -1;\n            needSend = 0;\n            cout << \"The other is dead\\n\";\n        } else {\n            // nothing to do\n            cout << \"go to heartbeat receive loop\\n\";\n            int cfd = accept(sockfd, (struct sockaddr *)&cli_addr, &cli_len);\n            if(cfd < 0) {\n                perror(\"It shouldn't be error\");\n            }\n            needSend = 1;\n            heartbeat_receive_loop(cfd);\n            close(cfd);\n        }\nheart_beat_accept_fail:\n        if(status < 0) {\n        }\n    }\n}\n\n\nvoid heartbeat_send() {\n    int wfd;\n    int sockfd;\n    \n\n    struct timeval timeout;\n    timeout.tv_sec = 5;  // It matter on the interval of heartbeat\n    timeout.tv_usec = 0;\n\n    struct sockaddr_in receiver_addr;\n    bzero((void *)&receiver_addr, sizeof(receiver_addr));\n    receiver_addr.sin_family = AF_INET;\n    receiver_addr.sin_addr.s_addr = inet_addr(SERVER_ADDR);\n    receiver_addr.sin_port = htons(HEARTBEAT_RECEIVE_PORT);\n\n    while(1) {\n        sockfd = socket(AF_INET, SOCK_STREAM, 0);\n        if(sockfd < 0) {\n            ERROR(\"%d\\n\", __LINE__);\n        }\n        \n        //if(setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(int)) < 0 ) {\n        //    perror(\"setopt send\");\n        //    ERROR(\"%d\\n\", __LINE__);\n        //}\n        //\n        int set = 1;\n        /*if(setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)) < 0) {\n            perror(\"setsock  nopipe\");\n            ERROR(\"%d\\n\", __LINE__);\n        }*/\n        \n        int ret = connect_nonblock(&receiver_addr, sockfd, 5);\n        if(ret < 0) {\n            if(errno == ECONNREFUSED) {\n                cout << \"connection refused\\n\";          \n                sleep(1);\n                continue;\n            }\n\n            perror(\"connect after nonblock\");\n            ERROR(\"%d\\n\", __LINE__);\n        }\n\n        if(errno == ETIMEDOUT) {\n            // time out\n            continue;\n        }\n        \n        cout << \"go to send loop\\n\";\n        heartbeat_send_loop(sockfd);\n        cout << \"cease sending\\n\";\n        close(sockfd);\n    }\n}\n",
-			"file": "heartbeat.cpp",
-			"file_size": 4981,
-			"file_write_time": 1404860464000000,
+			"file": "master_machine.cpp",
 			"settings":
 			{
-				"buffer_size": 4981,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "/home/evangileon/.config/sublime-text-2/Packages/Default/Preferences.sublime-settings",
-			"settings":
-			{
-				"buffer_size": 13677,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "net_util.cpp",
-			"settings":
-			{
-				"buffer_size": 4138,
+				"buffer_size": 199,
 				"line_ending": "Unix"
 			}
 		}
@@ -98,20 +167,36 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 79.0,
+		"height": 217.0,
 		"selected_items":
 		[
 			[
+				"Package Control: re",
+				"Package Control: Remove Package"
+			],
+			[
 				"Package Control: in",
 				"Package Control: Install Package"
+			],
+			[
+				"Package Control: up",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"mar",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"rebu",
+				"CTags: Rebuild Tags"
 			],
 			[
 				"Package Control: ins",
 				"Package Control: Install Package"
 			],
 			[
-				"Package Control: re",
-				"Package Control: Remove Package"
+				"ma",
+				"Markdown Preview: Preview in Browser"
 			],
 			[
 				"Package Control: li",
@@ -124,10 +209,6 @@
 			[
 				"Package Control: lis",
 				"Package Control: List Packages"
-			],
-			[
-				"Package Control: up",
-				"Package Control: Upgrade Package"
 			],
 			[
 				"Package Control: u",
@@ -186,7 +267,17 @@
 	},
 	"console":
 	{
-		"height": 153.0
+		"height": 153.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"import urllib2,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); os.makedirs( ipp ) if not os.path.exists(ipp) else None; urllib2.install_opener( urllib2.build_opener( urllib2.ProxyHandler()) ); by = urllib2.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); open( os.path.join( ipp, pf), 'wb' ).write(by) if dh == h else None; print('Error validating download (got %s instead of %s), please try manual install' % (dh, h) if dh != h else 'Please restart Sublime Text to finish installation')",
+			"import urllib2",
+			"import urllib,os; pf='Package Control.sublime-package'; ipp=sublime.installed_packages_path(); os.makedirs(ipp) if not os.path.exists(ipp) else None; urllib.install_opener(urllib.build_opener(urllib.ProxyHandler())); open(os.path.join(ipp,pf),'wb').write(urllib.urlopen('http://sublime.wbond.net/'+pf.replace(' ','%20')).read()); print('Please restart Sublime Text to finish installation')",
+			"import urllib,os; pf='Package Control.sublime-package'; ipp=sublime.installed_packages_path(); os.makedirs(ipp) if not os.path.exists(ipp) else None; urllib3.install_opener(urllib3.build_opener(urllib3.ProxyHandler())); open(os.path.join(ipp,pf),'wb').write(urllib3.urlopen('http://sublime.wbond.net/'+pf.replace(' ','%20')).read()); print('Please restart Sublime Text to finish installation')",
+			"import urllib3,os; pf='Package Control.sublime-package'; ipp=sublime.installed_packages_path(); os.makedirs(ipp) if not os.path.exists(ipp) else None; urllib3.install_opener(urllib3.build_opener(urllib3.ProxyHandler())); open(os.path.join(ipp,pf),'wb').write(urllib3.urlopen('http://sublime.wbond.net/'+pf.replace(' ','%20')).read()); print('Please restart Sublime Text to finish installation')",
+			"import urllib2,os; pf='Package Control.sublime-package'; ipp=sublime.installed_packages_path(); os.makedirs(ipp) if not os.path.exists(ipp) else None; urllib2.install_opener(urllib2.build_opener(urllib2.ProxyHandler())); open(os.path.join(ipp,pf),'wb').write(urllib2.urlopen('http://sublime.wbond.net/'+pf.replace(' ','%20')).read()); print('Please restart Sublime Text to finish installation')"
+		]
 	},
 	"distraction_free":
 	{
@@ -199,6 +290,46 @@
 	},
 	"file_history":
 	[
+		"/home/evangileon/build/failover/standby_machine.cpp",
+		"/home/evangileon/build/failover/masterfail.cpp",
+		"/home/evangileon/build/failover/standby_machine.h",
+		"/home/evangileon/.config/sublime-text-3/Packages/User/SublimeLinter.sublime-settings",
+		"/home/evangileon/build/failover/util.h",
+		"/home/evangileon/build/failover/master_machine.h",
+		"/home/evangileon/.config/sublime-text-3/Packages/SublimeLinter/SublimeLinter.sublime-settings",
+		"/home/evangileon/build/failover/failover.sublime-project",
+		"/home/evangileon/build/failover/net_util.cpp",
+		"/home/evangileon/build/failover/masterfail_1.cpp",
+		"/home/evangileon/build/failover/master_machine.cpp",
+		"/home/evangileon/build/failover/.masterfail_1.cpp.swo",
+		"/home/evangileon/build/failover/#_assh_broot@10.176.15.104_b_aroot_abuild_afailover_amasterfail__1.cpp#",
+		"/home/evangileon/Desktop/Library/normalize.py",
+		"/home/evangileon/build/failover/slavefail.cpp",
+		"/home/evangileon/Desktop/Library/branch.py",
+		"/home/evangileon/test/test.tex",
+		"/home/evangileon/build/failover/statusCheck.cpp",
+		"/home/evangileon/build/failover/config.h",
+		"/home/evangileon/Downloads/日月当空.txt",
+		"/home/evangileon/.config/sublime-text-3/Packages/Emmet/Emmet.sublime-settings",
+		"/home/evangileon/.config/sublime-text-3/Packages/SublimeREPL/SublimeREPL.sublime-settings",
+		"/home/evangileon/.config/sublime-text-3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
+		"/home/evangileon/.config/sublime-text-3/Packages/SublimeLinter-contrib-clang/linter.py",
+		"/home/evangileon/.config/sublime-text-3/Packages/SublimeLinter-contrib-clang/README.md",
+		"/home/evangileon/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+		"/home/evangileon/golib/src/github.com/nsf/gocode/client.go",
+		"/home/evangileon/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/evangileon/.config/sublime-text-3/Packages/SublimeLinter/README.md",
+		"/home/evangileon/.config/sublime-text-3/Packages/User/Default (Linux).sublime-keymap",
+		"/home/evangileon/.config/sublime-text-3/Packages/Default/Default (Linux).sublime-keymap",
+		"/home/evangileon/.config/sublime-text-3/Packages/BracketHighlighter/Example.sublime-keymap",
+		"/home/evangileon/.config/sublime-text-3/Packages/User/.sublime-mousemap",
+		"/home/evangileon/build/failover/heartbeat.cpp",
+		"/home/evangileon/.config/sublime-text-3/Packages/BracketHighlighter/bh_core.sublime-settings",
+		"/home/evangileon/build/failover/statusCheck.h",
+		"/home/evangileon/build/failover/ProcessChecker.sh",
+		"/home/evangileon/build/failover/sftp-config.json",
+		"/home/evangileon/build/failover/Makefile",
+		"/home/evangileon/.config/sublime-text-2/Packages/Default/Preferences.sublime-settings",
 		"/home/evangileon/build/pascal.cpp",
 		"/home/evangileon/golib/src/github.com/nsf/gocode/gocode.go",
 		"/home/evangileon/golib/src/github.com/nsf/gocode/os_posix.go",
@@ -286,51 +417,11 @@
 		"/home/yj/Build/arm-dev/include/common.h",
 		"/home/yj/go/src/pkg/flag/flag.go",
 		"/home/yj/go/misc/goplay/goplay.go",
-		"/home/yj/go/src/pkg/os/exec.go",
-		"/home/yj/.config/sublime-text-2/Packages/SideBarEnhancements/messages/11.13.2012.1305.0.txt",
-		"/home/yj/go/src/pkg/code.google.com/p/goprotobuf/proto/encode.go",
-		"/home/yj/wayland/cairo/aclocal.m4",
-		"/home/yj/go/src/pkg/code.google.com/p/goprotobuf/proto/lib.go",
-		"/home/yj/go/src/pkg/code.google.com/p/goprotobuf/proto/message_set.go",
-		"/home/yj/go/src/pkg/github.com/ha/doozer/conn.go",
-		"/home/yj/go/src/pkg/github.com/ha/doozerd/server/txn.go",
-		"/home/yj/wayland/pixman/pixman/pixman-glyph.c",
-		"/home/yj/Build/v2ex/backstage.py",
-		"/home/yj/wayland/pixman/pixman/pixman-private.h",
-		"/home/yj/wayland/pixman/pixman/pixman-compiler.h",
-		"/home/yj/wayland/cairo/Makefile",
-		"/home/yj/wayland/cairo/Makefile.am",
-		"/home/yj/wayland/pixman/pixman/pixman.h",
-		"/home/yj/wayland/cairo/Makefile.in",
-		"/home/yj/Build/thrift-0.9.0/lib/go/thrift/ttransport.go",
-		"/home/yj/go/go-test.go",
-		"/home/yj/go/src/pkg/github.com/robfig/revel/cmd/run.go",
-		"/home/yj/go/src/pkg/github.com/robfig/revel/samples/chat/app/chatroom/chatroom.go",
-		"/home/yj/Build/thrift-0.9.0/lib/go/thrift/tbinary_protocol.go",
-		"/home/yj/go/test/named.go",
-		"/home/yj/go/test/index.go",
-		"/home/yj/go/test/cmp.go",
-		"/host/goagent/local/proxy.py",
-		"/home/yj/go/misc/emacs/go-mode-load.el",
-		"/home/yj/go/test/bench/garbage/parser.go",
-		"/home/yj/go/test/run.go",
-		"/home/yj/go/test/goto.go",
-		"/home/yj/go/src/pkg/runtime/thread_linux.c",
-		"/home/yj/Build/dea-1.4/lisps/golang/go-mode.el",
-		"/home/yj/Build/dea-1.4/lisps/xref/xrefsetup",
-		"/home/yj/Build/dea-1.4/lisps/org/org-src.el",
-		"/media/F8FE85B4FE856C26/Users/yj/Desktop/~~~大白本/NO.2-NO.9--text/tn2-3.txt",
-		"/home/yj/go/test/dwarf/main.go",
-		"/home/yj/go/src/pkg/github.com/mattn/go-sqlite3/sqlite3.go",
-		"/home/yj/go/src/pkg/go/build/build.go",
-		"/home/yj/Build/dea-1.4/my-lisps/rails-settings.el",
-		"/home/yj/Build/dea-1.4/my-lisps/dev-settings.el",
-		"/home/yj/go/src/cmd/gc/walk.c",
-		"/home/yj/go/src/cmd/8c/gc.h"
+		"/home/yj/go/src/pkg/os/exec.go"
 	],
 	"find":
 	{
-		"height": 37.0
+		"height": 27.0
 	},
 	"find_in_files":
 	{
@@ -344,6 +435,11 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"thread",
+			"__jun_net_optval",
+			"__jun_net_serv_addr",
+			"receiveMessageOnce",
+			"need",
 			"func",
 			"EMPTY_EHANDLER",
 			"semanticdb-abstract-table",
@@ -419,23 +515,24 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "heartbeat.cpp",
+					"file": "master_machine.cpp",
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4981,
+						"buffer_size": 199,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1117,
-								1117
+								197,
+								197
 							]
 						],
 						"settings":
@@ -443,211 +540,168 @@
 							"BracketHighlighterBusy": false,
 							"bh_regions":
 							[
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
 								"bh_c_define",
 								"bh_c_define_center",
 								"bh_c_define_open",
 								"bh_c_define_close",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
 								"bh_round",
 								"bh_round_center",
 								"bh_round_open",
 								"bh_round_close",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
 								"bh_single_quote",
 								"bh_single_quote_center",
 								"bh_single_quote_open",
-								"bh_single_quote_close"
-							],
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 927.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "/home/evangileon/.config/sublime-text-2/Packages/Default/Preferences.sublime-settings",
-					"settings":
-					{
-						"buffer_size": 13677,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								7716,
-								7716
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
+								"bh_single_quote_close",
 								"bh_curly",
 								"bh_curly_center",
 								"bh_curly_open",
 								"bh_curly_close",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close"
-							],
-							"syntax": "Packages/JavaScript/JSON.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "net_util.cpp",
-					"settings":
-					{
-						"buffer_size": 4138,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								291,
-								291
-							]
-						],
-						"settings":
-						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
 								"bh_square",
 								"bh_square_center",
 								"bh_square_open",
 								"bh_square_close",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
 								"bh_default",
 								"bh_default_center",
 								"bh_default_open",
 								"bh_default_close",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
 								"bh_unmatched",
 								"bh_unmatched_center",
 								"bh_unmatched_open",
 								"bh_unmatched_close",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close"
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close"
 							],
-							"syntax": "Packages/C++/C++.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"codeintel": true,
+							"codeintel_config":
+							{
+								"JavaScript":
+								{
+									"codeintel_max_recursive_dir_depth": 2,
+									"codeintel_scan_files_in_project": false,
+									"javascriptExtraPaths":
+									[
+									]
+								},
+								"PHP":
+								{
+									"codeintel_max_recursive_dir_depth": 5,
+									"codeintel_scan_files_in_project": false,
+									"phpExtraPaths":
+									[
+									]
+								},
+								"Python":
+								{
+									"env":
+									{
+										"PATH": "/usr/local/bin:/usr/local/sbin:$PATH",
+										"PYTHONPATH": "/usr/local/lib/python2.7/site-packages:/usr/local/lib/python:$PYTHONPATH"
+									}
+								}
+							},
+							"codeintel_enabled_languages":
+							[
+								"JavaScript",
+								"Mason",
+								"XBL",
+								"XUL",
+								"RHTML",
+								"SCSS",
+								"Python",
+								"HTML",
+								"Ruby",
+								"Python3",
+								"XML",
+								"Sass",
+								"XSLT",
+								"Django",
+								"HTML5",
+								"Perl",
+								"CSS",
+								"Twig",
+								"Less",
+								"Smarty",
+								"Node.js",
+								"Tcl",
+								"TemplateToolkit",
+								"PHP"
+							],
+							"codeintel_live": true,
+							"codeintel_live_enabled_languages":
+							[
+								"JavaScript",
+								"Mason",
+								"XBL",
+								"XUL",
+								"RHTML",
+								"SCSS",
+								"Python",
+								"HTML",
+								"Ruby",
+								"Python3",
+								"XML",
+								"Sass",
+								"XSLT",
+								"Django",
+								"HTML5",
+								"Perl",
+								"CSS",
+								"Twig",
+								"Less",
+								"Smarty",
+								"Node.js",
+								"Tcl",
+								"TemplateToolkit",
+								"PHP"
+							],
+							"codeintel_max_recursive_dir_depth": 10,
+							"codeintel_scan_exclude_dir":
+							{
+								"JavaScript":
+								[
+									"/build/",
+									"/min/"
+								]
+							},
+							"codeintel_scan_files_in_project": true,
+							"codeintel_selected_catalogs":
+							[
+								"PyWin32",
+								"jQuery",
+								"Rails"
+							],
+							"codeintel_snippets": true,
+							"codeintel_syntax_map":
+							{
+								"Python Django": "Python"
+							},
+							"codeintel_tooltips": "popup",
+							"incomplete_sync": null,
+							"origin_encoding": "UTF-8",
+							"remote_loading": false,
+							"sublime_auto_complete": true,
+							"synced": false,
+							"syntax": "Packages/C++/C++.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
+					"stack_index": 0,
 					"type": "text"
 				}
 			]
@@ -655,7 +709,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 37.0
+		"height": 27.0
 	},
 	"input":
 	{
@@ -704,9 +758,18 @@
 	{
 		"height": 120.0
 	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.sftp":
+	{
+		"height": 126.0
+	},
+	"project": "failover.sublime-project",
 	"replace":
 	{
-		"height": 64.0
+		"height": 50.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -725,10 +788,28 @@
 		],
 		"width": 380.0
 	},
+	"select_symbol":
+	{
+		"height": 79.0,
+		"selected_items":
+		[
+			[
+				"select",
+				"select_with_timeout"
+			]
+		],
+		"width": 378.0
+	},
+	"settings":
+	{
+	},
 	"show_minimap": true,
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
 	"side_bar_width": 217.0,
-	"status_bar_visible": true
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
 }

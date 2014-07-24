@@ -3,3 +3,4 @@ masterfail
 *.o
 *.out
 .tags
+*.d

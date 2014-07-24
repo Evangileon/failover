@@ -1,4 +1,4 @@
-#include "net_util.h"
+
 #include <strings.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/select.h>
+
+#include "net_util.h"
 #include "util.h"
 
 int select_write_with_timeout(int sockfdq, fd_set* wfds, int time_sec) {
@@ -46,19 +48,19 @@ int get_any_connection_ready(int sockfd, int domain, int protocal, int port, int
             ERROR("%d\n", __LINE__);    
         }       
     
-        int __jun_net_optval = 1;                   
-        if(setsockopt((sock), SOL_SOCKET, SO_REUSEADDR, &__jun_net_optval, sizeof __jun_net_optval) < 0) { 
+        int net_optval = 1;                   
+        if(setsockopt((sock), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) { 
             perror("errno on setsockopt");         
             ERROR("%d\n", __LINE__);    
         }
     }
     
-    struct sockaddr_in __jun_net_serv_addr;     
-    bzero((void *) &__jun_net_serv_addr, sizeof(__jun_net_serv_addr));                                
-    __jun_net_serv_addr.sin_family = domain;                 
-    __jun_net_serv_addr.sin_addr.s_addr = INADDR_ANY;         
-    __jun_net_serv_addr.sin_port = htons((port));             
-    if (bind((sock), (struct sockaddr *) &__jun_net_serv_addr,sizeof(__jun_net_serv_addr)) < 0) { 
+    struct sockaddr_in net_serv_addr;     
+    bzero((void *) &net_serv_addr, sizeof(net_serv_addr));                                
+    net_serv_addr.sin_family = domain;                 
+    net_serv_addr.sin_addr.s_addr = INADDR_ANY;         
+    net_serv_addr.sin_port = htons((port));             
+    if (bind((sock), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) < 0) { 
         perror("ERROR on binding, receiveMessage");  
         ERROR("%d\n", __LINE__);    
     }                                               

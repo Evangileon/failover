@@ -132,7 +132,6 @@ void heartbeat_receive() {
             heartbeat_receive_loop(cfd);
             close(cfd);
         }
-heart_beat_accept_fail:
         if(status < 0) {
         }
     }
@@ -140,14 +139,9 @@ heart_beat_accept_fail:
 
 
 void heartbeat_send() {
-    int wfd;
-    int sockfd;
     
-
-    struct timeval timeout;
-    timeout.tv_sec = 5;  // It matter on the interval of heartbeat
-    timeout.tv_usec = 0;
-
+    int sockfd;
+   
     struct sockaddr_in receiver_addr;
     bzero((void *)&receiver_addr, sizeof(receiver_addr));
     receiver_addr.sin_family = AF_INET;
@@ -165,7 +159,6 @@ void heartbeat_send() {
         //    ERROR("%d\n", __LINE__);
         //}
         //
-        int set = 1;
         /*if(setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)) < 0) {
             perror("setsock  nopipe");
             ERROR("%d\n", __LINE__);

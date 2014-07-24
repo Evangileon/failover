@@ -3,13 +3,14 @@
 #include <sys/socket.h>
 #include <strings.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <string>
 #include "config.h"
 #include "util.h"
 #include "net_util.h"
-#include "statusCheck.h"
+#include "status_check.h"
 
 using namespace std;
 
@@ -20,6 +21,7 @@ int status_receive_loop(int rfd) {
     fd_set rfds;
     int ret = -1;
     char buffer[16];
+
 
     while(1) {
         ret = select_with_timeout(rfd, &rfds, 2);
@@ -67,18 +69,18 @@ void status_receive() {
         ERROR("%d\n", __LINE__);
     }
 
-    int __jun_net_optval = 1;
-    if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &__jun_net_optval, sizeof __jun_net_optval) < 0) {
+    int net_optval = 1;
+    if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) {
         perror("errno on setsockopt");         
         ERROR("%d\n", __LINE__);    
     }  
 
-    struct sockaddr_in __jun_net_serv_addr;
-    bzero((void *) &__jun_net_serv_addr, sizeof(__jun_net_serv_addr));
-    __jun_net_serv_addr.sin_family = AF_INET;
-    __jun_net_serv_addr.sin_addr.s_addr = INADDR_ANY;
-    __jun_net_serv_addr.sin_port = htons((STATUS_PORT));
-    if (bind((sockfd), (struct sockaddr *) &__jun_net_serv_addr,sizeof(__jun_net_serv_addr)) < 0) {
+    struct sockaddr_in net_serv_addr;
+    bzero((void *) &net_serv_addr, sizeof(net_serv_addr));
+    net_serv_addr.sin_family = AF_INET;
+    net_serv_addr.sin_addr.s_addr = INADDR_ANY;
+    net_serv_addr.sin_port = htons((STATUS_PORT));
+    if (bind((sockfd), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) < 0) {
         perror("ERROR on binding, receiveMessage");
         ERROR("%d\n", __LINE__);
     }
@@ -113,9 +115,14 @@ void status_receive() {
             }
             needStatusSend = 1;
            	int masterStatus = status_receive_loop(cfd);
+            if(masterStatus < 0) {
+                close(cfd);
+                goto status_receive_fail;
+            }
+            
             close(cfd);
         }
-heart_beat_accept_fail:
+status_receive_fail:
         if(status < 0) {
         }
     }
@@ -183,13 +190,8 @@ int master_status_send_loop(int wfd) {
 }
 
 void master_status_send() {
-    int wfd;
-    int sockfd;
     
-
-    struct timeval timeout;
-    timeout.tv_sec = 5;  // It matter on the interval of heartbeat
-    timeout.tv_usec = 0;
+    int sockfd;
 
     struct sockaddr_in receiver_addr;
     bzero((void *)&receiver_addr, sizeof(receiver_addr));
@@ -208,7 +210,6 @@ void master_status_send() {
         //    ERROR("%d\n", __LINE__);
         //}
         //
-        int set = 1;
         /*if(setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)) < 0) {
             perror("setsock  nopipe");
             ERROR("%d\n", __LINE__);
