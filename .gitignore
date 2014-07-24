@@ -4,3 +4,4 @@ masterfail
 *.out
 .tags
 *.d
+*.swo
