@@ -18,7 +18,7 @@
 int status_receive_loop(int rfd) {
     fd_set rfds;
     int ret = -1;
-    char buffer[16];
+    char buffer[SEND_BUFFER_SIZE];
 
 
     while(1) {
@@ -30,11 +30,11 @@ int status_receive_loop(int rfd) {
             break;
         }
 
-        ret = recv(rfd, buffer, 16, 0);
+        ret = recv(rfd, buffer, SEND_BUFFER_SIZE, 0);
         if(ret <= 0) {
             break;
         }
-        if(ret > 16) {
+        if(ret > SEND_BUFFER_SIZE) {
         	std::cout << "I am hacked" << std::endl;
         	ret = -1;
         	break;

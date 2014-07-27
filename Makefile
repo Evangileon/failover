@@ -2,7 +2,7 @@
 
 EXECUTABLE := masterfail
 LIBS :=
-CC := g++
+CC := clang++
 LD := ld
 
 
@@ -25,12 +25,16 @@ RM-F := rm -f
 
 SOURCE := $(wildcard *.c) $(wildcard *.cpp)
 OBJS := $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCE)))
-CPPFLAGS +=
+DEPS := $(patsubst %.o,%.d,$(OBJS))
+MISSING_DEPS := $(filter-out $(wildcard $(DEPS)),$(DEPS))
+MISSING_DEPS_SOURCES := $(wildcard $(patsubst %.d,%.c,$(MISSING_DEPS)) $(patsubst %.d,%.cpp,$(MISSING_DEPS)))
+CPPFLAGS += -MD
 
 .PHONY : everything deps objs clean veryclean rebuild
 
 everything : $(EXECUTABLE)
 
+deps : $(DEPS)
 
 objs : $(OBJS)
 
@@ -43,6 +47,10 @@ veryclean: clean
 
 rebuild: veryclean everything
 
+ifneq ($(MISSING_DEPS),)
+$(MISSING_DEPS) :
+	@$(RM-F) $(patsubst %.d,%.o,$@)
+endif
 
 -include $(DEPS)
 

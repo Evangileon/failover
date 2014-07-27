@@ -15,6 +15,7 @@
 #include "net_util.h"
 #include "master_machine.h"
 #include "status_check.h"
+#include "async_handle_asterisk.h"
 
 sem_t status_send_end_sem;
 sem_t status_recv_end_sem;
@@ -24,7 +25,9 @@ int needStatusSend = 1;
 int master_status_send_loop(int wfd) {
     fd_set wfds; 
     int ret = -1;
-    char buffer[16];
+    char buffer[SEND_BUFFER_SIZE];
+
+    int restartCount = 0;
 
     while(1) {
         sleep(1);
@@ -32,7 +35,21 @@ int master_status_send_loop(int wfd) {
             break;
         }
 
-        std::string whatToSend = checkResultStr();
+        int check = checkStatus();
+        std::string whatToSend = checkResultStr(check);
+
+        if(check == 2) { // "down"
+            async_handle_asterisk::restart();
+            restartCount++;
+            if(restartCount == MAX_RESTART_TIMES) {
+                whatToSend = "down";
+                restartCount = 0;
+                async_handle_asterisk::stop();
+            } else {
+                whatToSend = "master try to restart asterisk";
+            }
+        }
+
 		whatToSend.copy(buffer, whatToSend.length( ));
 		buffer[whatToSend.length()] = '\0';
 		std::cout << "message: " << buffer << std::endl;
@@ -45,9 +62,9 @@ int master_status_send_loop(int wfd) {
             break;
         }
 
-        ret = send(wfd, buffer, 16, MSG_NOSIGNAL);
+        ret = send(wfd, buffer, whatToSend.length(), MSG_NOSIGNAL);
         DEBUG("errno = %d\n", errno);
-        if(ret != 16) {
+        if(ret != whatToSend.length()) {
             break;
         }
         std::cout << "status sent\n";

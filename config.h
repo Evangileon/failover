@@ -1,6 +1,7 @@
 #ifndef __CONFIG_H_JUN__
 #define __CONFIG_H_JUN__
 
+#define IS_MASTER 1
 
 #define FAILOVER_SOCKET_PATH    "/var/run/failover/failover.ctl"
 #define FAILOVER_PID_PATH       "/var/run/failover/failover.pid"
@@ -23,6 +24,8 @@
 #define STANDBY_ADDR SERVER_ADDR
 #define STATUS_PORT 44447
 
-#define IS_MASTER 1
+#define SEND_BUFFER_SIZE 64
+
+#define MAX_RESTART_TIMES 3
 
 #endif

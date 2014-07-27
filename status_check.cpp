@@ -12,23 +12,23 @@
 #include "net_util.h"
 #include "status_check.h"
 
+int checkStatus() {
+    int counter = system("ProcessChecker.sh");
+    if(counter < 0) {
+        ERROR("Can not exec ProcessChecker\n");
+    }
+    return counter;
+}
 
-std::string checkResultStr() {
+std::string checkResultStr(int counter) {
     std::string whatTosend;
-    int counter = system("ProcessChecker.sh"); 
     if(counter < 0) {
         ERROR("Can not exec ProcessChecker\n");
     }
 
     if(counter > 0) { //application is down or not fully functional
         std::cout << "Entering process down section" << std::endl;
-                //system("/sbin/ifdown eth2"); // we bring down the interface and the asterisk service on the system
-                //system("/etc/init.d/asterisk stop");        
         whatTosend = "down";
-                // send the message no action from my side       
-                //asFailure=1;
-                //isMaster=0;                   
-                //sleep(SLEEP_DUR);
     } else {
         std::cout << "Everything is fine" << std::endl;
         whatTosend="ok";

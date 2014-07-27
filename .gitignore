@@ -2,6 +2,6 @@ masterfail
 *.log
 *.o
 *.out
-.tags
+.tags*
 *.d
 *.swo

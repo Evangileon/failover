@@ -3,6 +3,7 @@
 
 #include <string>
 
-extern std::string checkResultStr();
+extern int checkStatus();
+extern std::string checkResultStr(int check);
 
 #endif
