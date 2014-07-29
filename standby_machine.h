@@ -5,5 +5,6 @@ extern int needStatusSend;
 
 extern void * status_receive(void *);
 extern int standby_machine();
+extern int other_is_master();
 
 #endif

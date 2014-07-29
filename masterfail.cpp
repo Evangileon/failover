@@ -187,7 +187,15 @@ int main(int argc, char const *argv[])
     int machine_ret = 0;
 
     while(1) {
+        // first check whether a master is alive
+
         if(isMaster) {
+            // first check whether a master is alive
+            if(other_is_master()) {
+                isMaster = 0;
+                continue;
+            }
+
             std::cout << "This is master" << std::endl;
             machine_ret = master_machine();
             if(machine_ret == MASTER_ASTERISK_STOP) {

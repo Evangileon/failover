@@ -163,3 +163,68 @@ int standby_machine() {
 
     return exit_val;
 }
+
+int other_is_master() {
+    int sockfd;
+    int ret;
+    int status = 0;
+    fd_set rfds;
+
+    struct sockaddr_in cli_addr;
+    socklen_t cli_len;
+    cli_len = sizeof(cli_addr);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if ((sockfd) < 0) {
+        perror("ERROR opening socket");
+        ERROR("%d\n", __LINE__);
+    }
+
+    int net_optval = 1;
+    if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) {
+        perror("errno on setsockopt");         
+        ERROR("%d\n", __LINE__);    
+    }  
+
+    struct sockaddr_in net_serv_addr;
+    bzero((void *) &net_serv_addr, sizeof(net_serv_addr));
+    net_serv_addr.sin_family = AF_INET;
+    net_serv_addr.sin_addr.s_addr = INADDR_ANY;
+    net_serv_addr.sin_port = htons((STATUS_PORT));
+    if (bind((sockfd), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) < 0) {
+        perror("ERROR on binding, receiveMessage");
+        ERROR("%d\n", __LINE__);
+    }
+    if(listen((sockfd),(MAX_CONN_COUNT)) < 0) {
+        perror("listen, receiveMessage");
+        ERROR("%d\n", __LINE__);
+    }
+
+        //sockfd = get_any_tcp_connection_ready_socket(sockfd, HEARTBEAT_RECEIVE_PORT, MAX_CONN_COUNT);
+    if(sockfd < 0) {
+            ERROR("%s, %d\n", __FILE__, __LINE__);
+    }
+
+    ret = select_with_timeout(sockfd, &rfds, 5);
+    if(ret < 0) {
+            perror("after select");
+            ERROR("%s, %d\n", __FILE__, __LINE__);
+    } else if (ret == 0) {
+            // timeout
+            // the other one is dead
+            status = -1;
+            needStatusSend = 0;
+            std::cout << "Not exist a master\n";
+            return 0;
+    } else {
+            // nothing to do
+        int cfd = accept(sockfd, (struct sockaddr *)&cli_addr, &cli_len);
+        if(cfd < 0) {
+                perror("It shouldn't be error");
+        }
+                
+        std:: cout << "alreay exist a master, so this is switched to standby\n";
+        close(cfd);
+        return 1;
+    }  
+}

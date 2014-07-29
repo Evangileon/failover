@@ -9,6 +9,8 @@
 #include "util.h"
 #include "net_util.h"
 #include "config.h"
+#include "async_handle_asterisk.h"
+#include "master_machine.h"
 
 using namespace std;
 
@@ -84,18 +86,18 @@ void heartbeat_receive() {
         ERROR("%d\n", __LINE__);
     }
 
-    int __jun_net_optval = 1;
-    if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &__jun_net_optval, sizeof __jun_net_optval) < 0) {
+    int net_optval = 1;
+    if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) {
         perror("errno on setsockopt");         
         ERROR("%d\n", __LINE__);    
     }  
 
-    struct sockaddr_in __jun_net_serv_addr;
-    bzero((void *) &__jun_net_serv_addr, sizeof(__jun_net_serv_addr));
-    __jun_net_serv_addr.sin_family = AF_INET;
-    __jun_net_serv_addr.sin_addr.s_addr = INADDR_ANY;
-    __jun_net_serv_addr.sin_port = htons((HEARTBEAT_RECEIVE_PORT));
-    if (bind((sockfd), (struct sockaddr *) &__jun_net_serv_addr,sizeof(__jun_net_serv_addr)) < 0) {
+    struct sockaddr_in net_serv_addr;
+    bzero((void *) &net_serv_addr, sizeof(net_serv_addr));
+    net_serv_addr.sin_family = AF_INET;
+    net_serv_addr.sin_addr.s_addr = INADDR_ANY;
+    net_serv_addr.sin_port = htons((HEARTBEAT_RECEIVE_PORT));
+    if (bind((sockfd), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) < 0) {
         perror("ERROR on binding, receiveMessage");
         ERROR("%d\n", __LINE__);
     }
@@ -104,7 +106,7 @@ void heartbeat_receive() {
         ERROR("%d\n", __LINE__);
     }
 
-    
+    int fails = 0;
     while(1) {
         //sockfd = get_any_tcp_connection_ready_socket(sockfd, HEARTBEAT_RECEIVE_PORT, MAX_CONN_COUNT);
         if(sockfd < 0) {
