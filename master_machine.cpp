@@ -1,11 +1,11 @@
 
-#include <thread>
 #include <semaphore.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <strings.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include <iostream>
 #include <string>
@@ -28,6 +28,8 @@ int master_status_send_loop(int wfd) {
     char buffer[SEND_BUFFER_SIZE];
 
     int restartCount = 0;
+    bool end_status_send_loop = false;
+    int loop_ret_val = 0;
 
     while(1) {
         sleep(1);
@@ -38,13 +40,14 @@ int master_status_send_loop(int wfd) {
         int check = checkStatus();
         std::string whatToSend = checkResultStr(check);
 
-        if(check == 2) { // "down"
+        if(check == ASTERISK_STOP) { // "down"
             async_handle_asterisk::restart();
             restartCount++;
             if(restartCount == MAX_RESTART_TIMES) {
                 whatToSend = "down";
                 restartCount = 0;
                 async_handle_asterisk::stop();
+                end_status_send_loop = true;
             } else {
                 whatToSend = "master try to restart asterisk";
             }
@@ -68,14 +71,19 @@ int master_status_send_loop(int wfd) {
             break;
         }
         std::cout << "status sent\n";
+        if (end_status_send_loop) {
+            loop_ret_val = ASTERISK_STOP;
+            break;
+        }
     }
 
-    return ret;
+    return loop_ret_val;
 }
 
-void master_status_send() {
+void * master_status_send(void *exit_val) {
     
     int sockfd;
+    int thread_exit_val = 0;
 
     struct sockaddr_in receiver_addr;
     bzero((void *)&receiver_addr, sizeof(receiver_addr));
@@ -117,17 +125,39 @@ void master_status_send() {
         }
         
         std::cout << "status send loop\n";
-        master_status_send_loop(sockfd);
-        //cout << "cease sending\n";
+        int status = master_status_send_loop(sockfd);
+        if(status == ASTERISK_STOP) {
+            std::cout << "cease status sending\n";
+            thread_exit_val = status;
+            close(sockfd);
+            break;
+        }
         close(sockfd);
     }
+
+    *((int *)exit_val) = thread_exit_val;
+    return NULL;
 }
 
 void master_machine() {
+    int ret;
+    int exit_val = 0;
+    pthread_t master_thread;
+    struct thread_info *tinfo;
+    pthread_attr_t attr;
 
-	sem_init(&status_send_end_sem, 0, 0);
+    if((ret = pthread_attr_init(&attr)) != 0) {
+        ERROR("Create init thread attr error: %d\n", ret);
+    }
+
+	if((ret = sem_init(&status_send_end_sem, 0, 0)) != 0) {
+        ERROR("semaphore init thread attr error: %d\n", ret);
+    }
+
+    if((ret = pthread_create(&master_thread, &attr, &master_status_send, (void *)&exit_val)) != 0) {
+        ERROR("Create thread error: %d\n", ret);
+    }
+
 	//system("/sbin/ifup eth2");
-	std::thread statusSend(master_status_send);
-	statusSend.detach();
 	
 }
