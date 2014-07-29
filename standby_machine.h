@@ -3,7 +3,7 @@
 
 extern int needStatusSend;
 
-extern void status_receive();
-extern void standby_machine();
+extern void * status_receive(void *);
+extern int standby_machine();
 
 #endif

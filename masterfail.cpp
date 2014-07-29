@@ -184,13 +184,23 @@ int main(int argc, char const *argv[])
     std::thread heartbeatSendThread(heartbeat_send);
     heartbeatSendThread.detach();
 
-    if(isMaster) {
-    	std::cout << "This is master" << std::endl;
-		master_machine();
-	} else {
-		std::cout << "This is standby" << std::endl;
-		standby_machine();		
-	}
+    int machine_ret = 0;
+
+    while(1) {
+        if(isMaster) {
+            std::cout << "This is master" << std::endl;
+            machine_ret = master_machine();
+            if(machine_ret == MASTER_ASTERISK_STOP) {
+                isMaster = 0;
+            }
+        } else {
+            std::cout << "This is standby" << std::endl;
+            machine_ret = standby_machine();
+            if(machine_ret == MASTER_ASTERISK_STOP) {
+                isMaster = 1;
+            }		
+        }
+    }
 
 	#if 0
 	

@@ -128,7 +128,7 @@ void * master_status_send(void *exit_val) {
         int status = master_status_send_loop(sockfd);
         if(status == ASTERISK_STOP) {
             std::cout << "cease status sending\n";
-            thread_exit_val = status;
+            thread_exit_val = MASTER_ASTERISK_STOP;
             close(sockfd);
             break;
         }
@@ -139,7 +139,7 @@ void * master_status_send(void *exit_val) {
     return NULL;
 }
 
-void master_machine() {
+int master_machine() {
     int ret;
     int exit_val = 0;
     pthread_t master_thread;
@@ -158,6 +158,9 @@ void master_machine() {
         ERROR("Create thread error: %d\n", ret);
     }
 
-	//system("/sbin/ifup eth2");
-	
+	if((ret = pthread_join(master_thread, NULL)) != 0) {
+        perror("Can not join");
+    }
+
+	return exit_val;
 }

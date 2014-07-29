@@ -3,6 +3,7 @@
 #include <strings.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <iostream>
 #include <string>
@@ -43,6 +44,10 @@ int status_receive_loop(int rfd) {
         buffer[ret] = '\0';
 
         std::cout << "master is " << buffer << std::endl;
+        if(strcmp(buffer, "down") == 0) {
+            ret = MASTER_ASTERISK_STOP;
+            break;
+        }
         sleep(1);
     }
 
@@ -51,10 +56,11 @@ int status_receive_loop(int rfd) {
     return ret;
 }
 
-void status_receive() {
+void * status_receive(void *exit_val) {
     int sockfd;
     int ret;
     int status = 0;
+    int thread_exit_val;
     fd_set rfds;
 
     struct sockaddr_in cli_addr;
@@ -113,29 +119,47 @@ void status_receive() {
             }
             needStatusSend = 1;
            	int masterStatus = status_receive_loop(cfd);
-            if(masterStatus < 0) {
+            if(masterStatus == MASTER_ASTERISK_STOP) {
                 close(cfd);
-                goto status_receive_fail;
+                thread_exit_val = MASTER_ASTERISK_STOP;
+                break;
             }
             
             close(cfd);
         }
-status_receive_fail:
-        if(status < 0) {
-        }
     }
     std::cout << "status receive thread end" << std::endl;
+    *((int *)exit_val) = thread_exit_val;
+    return NULL;
 }
 
 
 
-void standby_machine() {
+int standby_machine() {
 	system("/sbin/ifdown eth2");
 	system("/etc/init.d/asterisk stop");
 	
-	std::cout << "starting the threads" << std::endl;
-	//std::thread receive(receiveMessage);
-	//receive.join();
-	std::thread statusRecv(status_receive);
-	statusRecv.detach();
+	int ret;
+    int exit_val = 0;
+    pthread_t standby_thread;
+    struct thread_info *tinfo;
+    pthread_attr_t attr;
+
+    if((ret = pthread_attr_init(&attr)) != 0) {
+        ERROR("Create init thread attr error: %d\n", ret);
+    }
+
+    if((ret = sem_init(&status_send_end_sem, 0, 0)) != 0) {
+        ERROR("semaphore init thread attr error: %d\n", ret);
+    }
+
+    if((ret = pthread_create(&standby_thread, &attr, &status_receive, (void *)&exit_val)) != 0) {
+        ERROR("Create thread error: %d\n", ret);
+    }
+
+    if((ret = pthread_join(standby_thread, NULL)) != 0) {
+        perror("Can not join");
+    }
+
+    return exit_val;
 }
