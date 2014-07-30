@@ -240,3 +240,18 @@ int other_is_master() {
         return 1;
     }  
 }
+
+int seize_master(struct master_status_mtx *mas_sta) {
+    if(pthread_mutex_lock(&mas_sta->mutex)) {
+        perror("yield master");
+        CUR_ERR();
+    }
+
+    mas_sta->isMaster = 1;
+
+    if(pthread_mutex_unlock(&mas_sta->mutex)) {
+        perror("yield master");
+        CUR_ERR();
+    }
+    return 1; // current status
+}

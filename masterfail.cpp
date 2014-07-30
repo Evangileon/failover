@@ -160,8 +160,7 @@ void setup_signal_handler() {
 
 
 
-
-static int isMaster;
+pthread_mutex_t masterMutex;
 static int isInitMaster;
 
 int main(int argc, char const *argv[])
@@ -175,8 +174,14 @@ int main(int argc, char const *argv[])
     
     setup_signal_handler();
 
-    isMaster = IS_MASTER;
-    isInitMaster = isMaster;
+    struct master_status_mtx mas_sta;
+
+    if (IS_MASTER) {
+        init_as_master(&mas_sta);
+    } else {
+        init_as_standby(&mas_sta);
+    }
+    isInitMaster = IS_MASTER;
 
     std::thread heartbeatReceiveThread(heartbeat_receive);
     heartbeatReceiveThread.detach();
@@ -189,23 +194,24 @@ int main(int argc, char const *argv[])
     while(1) {
         // first check whether a master is alive
 
-        if(isMaster) {
+        if(is_this_master(&mas_sta)) {
             // first check whether a master is alive
             if(other_is_master()) {
-                isMaster = 0;
+                yield_master(&mas_sta);
                 continue;
             }
 
             std::cout << "This is master" << std::endl;
             machine_ret = master_machine();
             if(machine_ret == MASTER_ASTERISK_STOP) {
-                isMaster = 0;
+                yield_master(&mas_sta);
             }
+
         } else {
             std::cout << "This is standby" << std::endl;
             machine_ret = standby_machine();
             if(machine_ret == MASTER_ASTERISK_STOP) {
-                isMaster = 1;
+                seize_master(&mas_sta);
             }		
         }
     }

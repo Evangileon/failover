@@ -174,3 +174,48 @@ int master_machine() {
 
 	return exit_val;
 }
+
+static int init_master_status(struct master_status_mtx *mas_sta) {
+    if(pthread_mutex_init(&mas_sta->mutex, NULL)) {
+        perror("yield master");
+        CUR_ERR();
+    }
+    return 0;
+}
+
+inline int init_machine_as(struct master_status_mtx *mas_sta, int isMaster) {
+    init_master_status(mas_sta);
+    mas_sta->isMaster = isMaster;
+}
+
+int is_this_master(struct master_status_mtx *mas_sta) {
+    int isMaster;
+    if(pthread_mutex_lock(&mas_sta->mutex)) {
+        perror("yield master");
+        CUR_ERR();
+    }
+
+    isMaster = mas_sta->isMaster;
+
+    if(pthread_mutex_unlock(&mas_sta->mutex)) {
+        perror("yield master");
+        CUR_ERR();
+    }
+
+    return isMaster;
+}
+
+int yield_master(struct master_status_mtx *mas_sta) {
+    if(pthread_mutex_lock(&mas_sta->mutex)) {
+        perror("yield master");
+        CUR_ERR();
+    }
+
+    mas_sta->isMaster = 0;
+
+    if(pthread_mutex_unlock(&mas_sta->mutex)) {
+        perror("yield master");
+        CUR_ERR();
+    }
+    return 0; // current status
+}

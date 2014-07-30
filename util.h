@@ -16,4 +16,6 @@
 
 #define CUR_INFO() INFO("%s : %d\n", __FILE__, __LINE__)
 
+#define CUR_ERR() ERROR("%s : %d\n", __FILE__, __LINE__)
+
 #endif
