@@ -12,7 +12,6 @@
 #include "async_handle_asterisk.h"
 #include "master_machine.h"
 
-using namespace std;
 
 int needSend = 1;
 
@@ -34,7 +33,7 @@ int heartbeat_receive_loop(int rfd) {
         if(ret != 16) {
             break;
         }
-        cout << "heartbeat recv succeed\n";
+        std::cout << "heartbeat recv succeed\n";
         sleep(1);
     }
 
@@ -64,7 +63,7 @@ int heartbeat_send_loop(int wfd) {
         if(ret != 16) {
             break;
         }
-        cout << "heartbeat send succeed\n";
+        std::cout << "heartbeat send succeed\n";
     }
 
     return ret;
@@ -97,7 +96,7 @@ void heartbeat_receive() {
     net_serv_addr.sin_family = AF_INET;
     net_serv_addr.sin_addr.s_addr = INADDR_ANY;
     net_serv_addr.sin_port = htons((HEARTBEAT_RECEIVE_PORT));
-    if (bind((sockfd), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) < 0) {
+    if (bind((sockfd), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) != 0) {
         perror("ERROR on binding, receiveMessage");
         ERROR("%d\n", __LINE__);
     }
@@ -122,10 +121,10 @@ void heartbeat_receive() {
             // the other one is dead
             status = -1;
             needSend = 0;
-            cout << "The other is dead\n";
+            std::cout << "The other is dead\n";
         } else {
             // nothing to do
-            cout << "go to heartbeat receive loop\n";
+            std::cout << "go to heartbeat receive loop\n";
             int cfd = accept(sockfd, (struct sockaddr *)&cli_addr, &cli_len);
             if(cfd < 0) {
                 perror("It shouldn't be error");
@@ -169,13 +168,13 @@ void heartbeat_send() {
         int ret = connect_nonblock(&receiver_addr, sockfd, 5);
         if(ret < 0) {
             if(errno == ECONNREFUSED) {
-                cout << "connection refused\n";          
+                std::cout << "connection refused\n";          
                 sleep(1);
                 continue;
             }
 
             perror("connect after nonblock");
-            ERROR("%d\n", __LINE__);
+            //ERROR("%s:%d\n", __FILE__, __LINE__);
         }
 
         if(errno == ETIMEDOUT) {
@@ -183,9 +182,9 @@ void heartbeat_send() {
             continue;
         }
         
-        cout << "go to send loop\n";
+        std::cout << "go to send loop\n";
         heartbeat_send_loop(sockfd);
-        cout << "cease sending\n";
+        std::cout << "cease sending\n";
         close(sockfd);
     }
 }

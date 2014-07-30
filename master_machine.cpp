@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <errno.h>
 
 #include <iostream>
 #include <string>
@@ -16,11 +17,30 @@
 #include "master_machine.h"
 #include "status_check.h"
 #include "async_handle_asterisk.h"
+#include "thread_util.h"
 
 sem_t status_send_end_sem;
 sem_t status_recv_end_sem;
 
 int needStatusSend = 1;
+
+#define MAX_FD_NUM 16
+int fds[MAX_FD_NUM];
+
+void cleanup_handler(void *pfd) {
+    int fd = (long)pfd;
+    if(fd < 0) {
+        return;
+    }
+
+    int ret;
+    if((ret = close(fd)) != 0) {
+        if(errno == EBADF) {
+            return;
+        }
+        perror("cleanup: ");
+    }
+}
 
 int master_status_send_loop(int wfd) {
     fd_set wfds; 
@@ -67,7 +87,7 @@ int master_status_send_loop(int wfd) {
 
         ret = send(wfd, buffer, whatToSend.length(), MSG_NOSIGNAL);
         DEBUG("errno = %d\n", errno);
-        if(ret != whatToSend.length()) {
+        if(ret != (int)whatToSend.length()) {
             break;
         }
         std::cout << "status sent\n";
@@ -96,6 +116,9 @@ void * master_status_send(void *exit_val) {
         if(sockfd < 0) {
             ERROR("%d\n", __LINE__);
         }
+
+        // ensure the fd will be closed while calling pthread_cancel
+        pthread_cleanup_push(&cleanup_handler, (void *)((long)sockfd));
         
         //if(setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(int)) < 0 ) {
         //    perror("setopt send");
@@ -115,8 +138,8 @@ void * master_status_send(void *exit_val) {
                 continue;
             }
 
-            perror("connect after nonblock");
-            ERROR("%d\n", __LINE__);
+            perror("heartbeat connect to other fail");
+            continue;
         }
 
         if(errno == ETIMEDOUT) {
@@ -132,6 +155,7 @@ void * master_status_send(void *exit_val) {
             close(sockfd);
             break;
         }
+        pthread_cleanup_pop(1);
         close(sockfd);
     }
 

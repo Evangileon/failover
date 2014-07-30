@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include <pthread.h>
 
 #include <iostream>
 #include <string>
@@ -15,6 +16,7 @@
 #include "standby_machine.h"
 #include "master_machine.h"
 #include "status_check.h"
+#include "thread_util.h"
 
 int status_receive_loop(int rfd) {
     fd_set rfds;
@@ -73,6 +75,9 @@ void * status_receive(void *exit_val) {
         ERROR("%d\n", __LINE__);
     }
 
+    // ensure the fd will be closed while calling pthread_cancel
+    pthread_cleanup_push(&cleanup_handler, (void *)((long)sockfd));
+
     int net_optval = 1;
     if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) {
         perror("errno on setsockopt");         
@@ -117,6 +122,10 @@ void * status_receive(void *exit_val) {
             if(cfd < 0) {
                 perror("It shouldn't be error");
             }
+
+            // ensure the fd will be closed while calling pthread_cancel
+            pthread_cleanup_push(&cleanup_handler, (void *)((long)cfd));
+
             needStatusSend = 1;
            	int masterStatus = status_receive_loop(cfd);
             if(masterStatus == MASTER_ASTERISK_STOP) {
@@ -125,9 +134,12 @@ void * status_receive(void *exit_val) {
                 break;
             }
             
+            pthread_cleanup_pop(1);
             close(cfd);
         }
     }
+
+    pthread_cleanup_pop(1);
     std::cout << "status receive thread end" << std::endl;
     *((int *)exit_val) = thread_exit_val;
     return NULL;
@@ -205,7 +217,7 @@ int other_is_master() {
             ERROR("%s, %d\n", __FILE__, __LINE__);
     }
 
-    ret = select_with_timeout(sockfd, &rfds, 5);
+    ret = select_with_timeout(sockfd, &rfds, 2);
     if(ret < 0) {
             perror("after select");
             ERROR("%s, %d\n", __FILE__, __LINE__);
