@@ -5,3 +5,4 @@ masterfail
 .tags*
 *.d
 *.swo
+*.sublime-workspace

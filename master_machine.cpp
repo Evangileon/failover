@@ -27,20 +27,6 @@ int needStatusSend = 1;
 #define MAX_FD_NUM 16
 int fds[MAX_FD_NUM];
 
-void cleanup_handler(void *pfd) {
-    int fd = (long)pfd;
-    if(fd < 0) {
-        return;
-    }
-
-    int ret;
-    if((ret = close(fd)) != 0) {
-        if(errno == EBADF) {
-            return;
-        }
-        perror("cleanup: ");
-    }
-}
 
 int master_status_send_loop(int wfd) {
     fd_set wfds; 
@@ -167,7 +153,7 @@ int master_machine() {
     int ret;
     int exit_val = 0;
     pthread_t master_thread;
-    struct thread_info *tinfo;
+    //struct thread_info *tinfo;
     pthread_attr_t attr;
 
     if((ret = pthread_attr_init(&attr)) != 0) {

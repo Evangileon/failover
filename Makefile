@@ -2,7 +2,7 @@
 
 EXECUTABLE := masterfail
 LIBS :=
-CC := clang++
+CC := g++
 LD := ld
 
 
@@ -18,7 +18,7 @@ endif
 
 LIB += -L/usr/lib/x86_64-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -pthread
 CFLAGS := $(DEBUG) $(MACRO) -Wall
-CXXFLAGS := $(CFLAGS) -std=c++0x
+CXXFLAGS := $(CFLAGS) -std=c++11
 LDFLAGS := $(DEBUG) $(LIB)
 
 RM-F := rm -f
