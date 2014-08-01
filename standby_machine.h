@@ -6,8 +6,7 @@
 extern int needStatusSend;
 
 extern void * status_receive(void *);
-extern int standby_machine();
-extern int other_is_master();
-extern int seize_master(struct master_status_mtx *mas_sta);
+extern int standby_machine(pthread_t *thread_id);
+
 
 #endif

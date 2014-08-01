@@ -10,12 +10,14 @@
 #include <sys/un.h>
 #include <signal.h>
 
+#include <memory>
+
 #include "util.h"
 #include "net_util.h"
 #include "heartbeat.h"
 #include "master_machine.h"
 #include "standby_machine.h"
-
+#include "machine_interaction.h"
 #include "config.h"
 
 int receive_message_once() {
@@ -163,13 +165,16 @@ void setup_signal_handler() {
 pthread_mutex_t masterMutex;
 static int isInitMaster;
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
 	int test = 0;
 	if(1 < argc) {
         if(0 == strcmp(argv[1], "-x")) {
             test = 1;
         }
+    }
+
+    if(test) {
+        std::cout << "This is a test\n";
     }
     
     setup_signal_handler();
@@ -183,11 +188,7 @@ int main(int argc, char const *argv[])
     }
     isInitMaster = IS_MASTER;
 
-    std::thread heartbeatReceiveThread(heartbeat_receive);
-    heartbeatReceiveThread.detach();
-    sleep(4);  // wait for another to startup receive functionality
-    std::thread heartbeatSendThread(heartbeat_send);
-    heartbeatSendThread.detach();
+    std::auto_ptr<heartbeat> hb = init_heartbeat();
 
     int machine_ret = 0;
 
@@ -202,14 +203,17 @@ int main(int argc, char const *argv[])
             }
 
             std::cout << "This is master" << std::endl;
-            machine_ret = master_machine();
+            pthread_t master_thread;
+            machine_ret = master_machine(&master_thread);
+
             if(machine_ret == MASTER_ASTERISK_STOP) {
                 yield_master(&mas_sta);
             }
 
         } else {
             std::cout << "This is standby" << std::endl;
-            machine_ret = standby_machine();
+            pthread_t standby_thread;
+            machine_ret = standby_machine(&standby_thread);
             if(machine_ret == MASTER_ASTERISK_STOP) {
                 seize_master(&mas_sta);
             }		

@@ -6,16 +6,19 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include <thread>
+#include <memory>
+
 #include "util.h"
 #include "net_util.h"
 #include "config.h"
 #include "async_handle_asterisk.h"
 #include "master_machine.h"
+#include "heartbeat.h"
 
 
-int needSend = 1;
 
-int heartbeat_receive_loop(int rfd) {
+int heartbeat::heartbeat_receive_loop(int rfd) {
     fd_set rfds;
     int ret = -1;
     char buffer[16];
@@ -40,7 +43,7 @@ int heartbeat_receive_loop(int rfd) {
     return ret;
 }
 
-int heartbeat_send_loop(int wfd) {
+int heartbeat::heartbeat_send_loop(int wfd) {
     fd_set wfds; 
     int ret = -1;
     char buffer[16];
@@ -69,7 +72,7 @@ int heartbeat_send_loop(int wfd) {
     return ret;
 }
 
-void heartbeat_receive() {
+void heartbeat::heartbeat_receive() {
     int sockfd;
     int ret;
     int status = 0;
@@ -79,33 +82,12 @@ void heartbeat_receive() {
     socklen_t cli_len;
     cli_len = sizeof(cli_addr);
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = get_any_tcp_connection_ready(HEARTBEAT_RECEIVE_PORT, MAX_CONN_COUNT);
     if ((sockfd) < 0) {
         perror("ERROR opening socket");
         ERROR("%d\n", __LINE__);
     }
 
-    int net_optval = 1;
-    if(setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) {
-        perror("errno on setsockopt");         
-        ERROR("%d\n", __LINE__);    
-    }  
-
-    struct sockaddr_in net_serv_addr;
-    bzero((void *) &net_serv_addr, sizeof(net_serv_addr));
-    net_serv_addr.sin_family = AF_INET;
-    net_serv_addr.sin_addr.s_addr = INADDR_ANY;
-    net_serv_addr.sin_port = htons((HEARTBEAT_RECEIVE_PORT));
-    if (bind((sockfd), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) != 0) {
-        perror("ERROR on binding, receiveMessage");
-        ERROR("%d\n", __LINE__);
-    }
-    if(listen((sockfd),(MAX_CONN_COUNT)) < 0) {
-        perror("listen, receiveMessage");
-        ERROR("%d\n", __LINE__);
-    }
-
-    int fails = 0;
     while(1) {
         //sockfd = get_any_tcp_connection_ready_socket(sockfd, HEARTBEAT_RECEIVE_PORT, MAX_CONN_COUNT);
         if(sockfd < 0) {
@@ -139,7 +121,7 @@ void heartbeat_receive() {
 }
 
 
-void heartbeat_send() {
+void heartbeat::heartbeat_send() {
     
     int sockfd;
    
@@ -154,16 +136,6 @@ void heartbeat_send() {
         if(sockfd < 0) {
             ERROR("%d\n", __LINE__);
         }
-        
-        //if(setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(int)) < 0 ) {
-        //    perror("setopt send");
-        //    ERROR("%d\n", __LINE__);
-        //}
-        //
-        /*if(setsockopt(sockfd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int)) < 0) {
-            perror("setsock  nopipe");
-            ERROR("%d\n", __LINE__);
-        }*/
         
         int ret = connect_nonblock(&receiver_addr, sockfd, 5);
         if(ret < 0) {
@@ -187,4 +159,25 @@ void heartbeat_send() {
         std::cout << "cease sending\n";
         close(sockfd);
     }
+}
+
+void heartbeat::start_heartbeat_send() {
+    
+}
+
+void heartbeat::start_heartbeat_recv() {
+   
+}
+
+
+std::auto_ptr<heartbeat> init_heartbeat() {
+    heartbeat *hb = new heartbeat();
+    std::thread hbRecv(&heartbeat::heartbeat_send, hb);
+    hbRecv.detach();
+    sleep(4);
+    std::thread hbSend(&heartbeat::heartbeat_receive, hb);
+    hbSend.detach();
+
+    std::auto_ptr<heartbeat> hb_ptr(hb);
+    return hb_ptr;
 }
