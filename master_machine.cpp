@@ -19,18 +19,19 @@
 #include "status_check.h"
 #include "async_handle_asterisk.h"
 #include "thread_util.h"
+#include "observer.h"
 
-sem_t status_send_end_sem;
-sem_t status_recv_end_sem;
 
 int needStatusSend = 1;
 
 #define MAX_FD_NUM 16
 int fds[MAX_FD_NUM];
 
+master_machine::master_machine() { goingToBeTerminated = 0; }
+master_machine::~master_machine() {}
 
-int master_status_send_loop(int wfd) {
-    fd_set wfds; 
+int master_machine::master_status_send_loop(int wfd) {
+    fd_set wfds;
     int ret = -1;
     char buffer[SEND_BUFFER_SIZE];
 
@@ -38,20 +39,25 @@ int master_status_send_loop(int wfd) {
     bool end_status_send_loop = false;
     int loop_ret_val = 0;
 
-    while(1) {
+    while (1) {
+
+        if (goingToBeTerminated) {
+            ret = goingToBeTerminated;
+            break;
+        }
 
         sleep(1);
-        if(!needStatusSend) {
+        if (!needStatusSend) {
             break;
         }
 
         int check = checkStatus();
         std::string whatToSend = checkResultStr(check);
 
-        if(check == ASTERISK_STOP) { // "down"
+        if (check == ASTERISK_STOP) { // "down"
             async_handle_asterisk::restart();
             restartCount++;
-            if(restartCount == MAX_RESTART_TIMES) {
+            if (restartCount == MAX_RESTART_TIMES) {
                 whatToSend = "down";
                 restartCount = 0;
                 async_handle_asterisk::stop();
@@ -61,21 +67,21 @@ int master_status_send_loop(int wfd) {
             }
         }
 
-		whatToSend.copy(buffer, whatToSend.length( ));
-		buffer[whatToSend.length()] = '\0';
-		std::cout << "message: " << buffer << std::endl;
+        whatToSend.copy(buffer, whatToSend.length( ));
+        buffer[whatToSend.length()] = '\0';
+        std::cout << "message: " << buffer << std::endl;
 
         ret = select_write_with_timeout(wfd, &wfds, 5);
-        if(ret <= 0) {
+        if (ret <= 0) {
             break;
         }
-        if(!FD_ISSET(wfd, &wfds)) {
+        if (!FD_ISSET(wfd, &wfds)) {
             break;
         }
 
         ret = send(wfd, buffer, whatToSend.length(), MSG_NOSIGNAL);
         DEBUG("errno = %d\n", errno);
-        if(ret != (int)whatToSend.length()) {
+        if (ret != (int)whatToSend.length()) {
             break;
         }
         std::cout << "status sent\n";
@@ -88,8 +94,8 @@ int master_status_send_loop(int wfd) {
     return loop_ret_val;
 }
 
-void * master_status_send(void *exit_val) {
-    
+void master_machine::master_status_send() {
+
     int sockfd;
     int thread_exit_val = 0;
 
@@ -99,15 +105,15 @@ void * master_status_send(void *exit_val) {
     receiver_addr.sin_addr.s_addr = inet_addr(STANDBY_ADDR);
     receiver_addr.sin_port = htons(STATUS_PORT);
 
-    while(1) {
+    while (1) {
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if(sockfd < 0) {
+        if (sockfd < 0) {
             ERROR("%d\n", __LINE__);
         }
 
         // ensure the fd will be closed while calling pthread_cancel
         pthread_cleanup_push(&cleanup_handler, (void *)((long)sockfd));
-        
+
         //if(setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(int)) < 0 ) {
         //    perror("setopt send");
         //    ERROR("%d\n", __LINE__);
@@ -117,11 +123,11 @@ void * master_status_send(void *exit_val) {
             perror("setsock  nopipe");
             ERROR("%d\n", __LINE__);
         }*/
-        
+
         int ret = connect_nonblock(&receiver_addr, sockfd, 5);
-        if(ret < 0) {
-            if(errno == ECONNREFUSED) {
-                std::cout << "connection refused\n";          
+        if (ret < 0) {
+            if (errno == ECONNREFUSED) {
+                std::cout << "connection refused\n";
                 sleep(1);
                 continue;
             }
@@ -130,14 +136,14 @@ void * master_status_send(void *exit_val) {
             continue;
         }
 
-        if(errno == ETIMEDOUT) {
+        if (errno == ETIMEDOUT) {
             // time out
             continue;
         }
-        
+
         std::cout << "status send loop\n";
         int status = master_status_send_loop(sockfd);
-        if(status == ASTERISK_STOP) {
+        if (status == ASTERISK_STOP) {
             std::cout << "cease status sending\n";
             thread_exit_val = MASTER_ASTERISK_STOP;
             close(sockfd);
@@ -147,11 +153,12 @@ void * master_status_send(void *exit_val) {
         close(sockfd);
     }
 
-    *((int *)exit_val) = thread_exit_val;
-    return NULL;
+    //*((int *)exit_val) = thread_exit_val;
+    retval = thread_exit_val;
+    //return NULL;
 }
 
-int master_machine(pthread_t *thread_id) {
+/*int start_master_machine(pthread_t *thread_id) {
     int ret;
     int exit_val = 0;
     pthread_t master_thread;
@@ -162,7 +169,7 @@ int master_machine(pthread_t *thread_id) {
         ERROR("Create init thread attr error: %d\n", ret);
     }
 
-	if((ret = sem_init(&status_send_end_sem, 0, 0)) != 0) {
+    if((ret = sem_init(&status_send_end_sem, 0, 0)) != 0) {
         ERROR("semaphore init thread attr error: %d\n", ret);
     }
 
@@ -170,10 +177,27 @@ int master_machine(pthread_t *thread_id) {
         ERROR("Create thread error: %d\n", ret);
     }
 
-	if((ret = pthread_join(master_thread, NULL)) != 0) {
+    if((ret = pthread_join(master_thread, NULL)) != 0) {
         perror("Can not join");
     }
 
-	return master_thread;
+    return exit_val;
+}*/
+
+void master_machine::inject_thread(std::thread &t) {
+    master_thread.swap(t);
 }
 
+void master_machine::update(int flag) {
+    if (TERMINATE_THREAD == flag) {
+        goingToBeTerminated = 1;
+    }
+}
+
+std::shared_ptr<master_machine> init_master_machine() {
+    master_machine *mm = new master_machine();
+    std::thread mmThread(&master_machine::master_status_send, mm);
+    mm->inject_thread(mmThread);
+    std::shared_ptr<master_machine> mm_ptr(mm);
+    return mm_ptr;
+}

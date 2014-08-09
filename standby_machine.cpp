@@ -19,13 +19,22 @@
 #include "thread_util.h"
 #include "async_handle_asterisk.h"
 
-int status_receive_loop(int rfd) {
+standby_machine::standby_machine() { goingToBeTerminated = 0; }
+standby_machine::~standby_machine() {}
+
+int standby_machine::status_receive_loop(int rfd) {
     fd_set rfds;
     int ret = -1;
     char buffer[SEND_BUFFER_SIZE];
 
 
     while(1) {
+
+        if (goingToBeTerminated) {
+            ret = goingToBeTerminated;
+            break;
+        }
+
         ret = select_with_timeout(rfd, &rfds, 2);
         if(ret <= 0) {
             break;
@@ -59,7 +68,7 @@ int status_receive_loop(int rfd) {
     return ret;
 }
 
-void * status_receive(void *exit_val) {
+void standby_machine::status_receive() {
     int sockfd;
     int ret;
     int status = 0;
@@ -133,13 +142,14 @@ void * status_receive(void *exit_val) {
 
     pthread_cleanup_pop(1);
     std::cout << "status receive thread end" << std::endl;
-    *((int *)exit_val) = thread_exit_val;
-    return NULL;
+    //*((int *)exit_val) = thread_exit_val;
+    retval = thread_exit_val;
+    //return NULL;
 }
 
 
 
-int standby_machine(pthread_t *thread_id) {
+/*int standby_machine(pthread_t *thread_id) {
 	system("/sbin/ifdown eth2");
 	async_handle_asterisk::stop();
 	
@@ -166,4 +176,22 @@ int standby_machine(pthread_t *thread_id) {
     }
 
     return exit_val;
+}*/
+
+void standby_machine::inject_thread(std::thread &t) {
+    standby_thread.swap(t);
+}
+
+void standby_machine::update(int flag) {
+    if (TERMINATE_THREAD == flag) {
+        goingToBeTerminated = 1;
+    }
+}
+
+std::shared_ptr<standby_machine> init_standby_machine() {
+    standby_machine *sm = new standby_machine();
+    std::thread smThread(&standby_machine::status_receive, sm);
+    sm->inject_thread(smThread);
+    std::shared_ptr<standby_machine> mm_ptr(sm);
+    return mm_ptr;
 }

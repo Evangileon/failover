@@ -4,6 +4,9 @@
 #include <semaphore.h>
 #include <pthread.h>
 
+#include <memory>
+#include <thread>
+
 #define MASTER_ASTERISK_STOP 2
 
 class master_machine {
@@ -11,13 +14,21 @@ public:
     master_machine();
     ~master_machine();
 
+    //int master_machine(pthread_t *thread_id);
+    void master_status_send();
+    void inject_thread(std::thread &t);
+    void join() { master_thread.join(); }
+    int get_machine_retval() { return retval; }
+    void update(int flag);
+
+private:
+	int master_status_send_loop(int wfd);
+	std::thread master_thread;
+	int retval;
+    int goingToBeTerminated;
 };
 
-extern sem_t status_send_end_sem;
-extern sem_t status_recv_end_sem;
 
-extern void *master_status_send(void *);
-extern int master_machine(pthread_t *thread_id);
-
+extern std::shared_ptr<master_machine> init_master_machine();
 
 #endif

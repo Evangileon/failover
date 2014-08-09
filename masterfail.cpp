@@ -188,7 +188,7 @@ int main(int argc, char const *argv[]) {
     }
     isInitMaster = IS_MASTER;
 
-    std::auto_ptr<heartbeat> hb = init_heartbeat();
+    std::shared_ptr<heartbeat> hb = init_heartbeat();
 
     int machine_ret = 0;
 
@@ -203,21 +203,30 @@ int main(int argc, char const *argv[]) {
             }
 
             std::cout << "This is master" << std::endl;
-            pthread_t master_thread;
-            machine_ret = master_machine(&master_thread);
+            std::shared_ptr<master_machine> mm = init_master_machine();
+            hb->attach_observer(std::dynamic_pointer_cast<observer>(mm));
 
+            mm->join();
+
+            machine_ret = mm->get_machine_retval();
             if(machine_ret == MASTER_ASTERISK_STOP) {
                 yield_master(&mas_sta);
             }
 
         } else {
             std::cout << "This is standby" << std::endl;
-            pthread_t standby_thread;
-            machine_ret = standby_machine(&standby_thread);
+            std::shared_ptr<standby_machine> sm = init_standby_machine();
+            hb->attach_observer(std::dynamic_pointer_cast<observer>(sm));
+
+            sm->join();
+            
+            machine_ret = sm->get_machine_retval();
             if(machine_ret == MASTER_ASTERISK_STOP) {
                 seize_master(&mas_sta);
             }		
         }
+
+        hb->reset_observer();
     }
 
 	#if 0
