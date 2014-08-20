@@ -4,12 +4,13 @@
 #include <memory>
 
 #define TERMINATE_THREAD (-1)
+#define THE_OTHER_IS_DEAD  (-2)
 
 class observer
 {
 public:
 	observer() {}
-	virtual ~observer() = 0;
+	virtual ~observer() {};
 
 	virtual void update(int flag) = 0;
 };

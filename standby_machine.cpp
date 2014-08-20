@@ -19,7 +19,7 @@
 #include "thread_util.h"
 #include "async_handle_asterisk.h"
 
-standby_machine::standby_machine() { goingToBeTerminated = 0; }
+standby_machine::standby_machine() { terminationFlag = 0; }
 standby_machine::~standby_machine() {}
 
 int standby_machine::status_receive_loop(int rfd) {
@@ -30,9 +30,11 @@ int standby_machine::status_receive_loop(int rfd) {
 
     while(1) {
 
-        if (goingToBeTerminated) {
-            ret = goingToBeTerminated;
-            break;
+        if (terminationFlag) {
+            if (MASTER_ASTERISK_STOP == terminationFlag) {
+                ret = MASTER_ASTERISK_STOP;
+                break;
+            }
         }
 
         ret = select_with_timeout(rfd, &rfds, 2);
@@ -71,7 +73,7 @@ int standby_machine::status_receive_loop(int rfd) {
 void standby_machine::status_receive() {
     int sockfd;
     int ret;
-    int status = 0;
+    //int status = 0;
     int thread_exit_val;
     fd_set rfds;
 
@@ -113,7 +115,7 @@ void standby_machine::status_receive() {
         } else if (ret == 0) {
             // timeout
             // the other one is dead
-            status = -1;
+            //status = -1;
             needStatusSend = 0;
             std::cout << "Not receive status from master\n";
         } else {
@@ -183,8 +185,13 @@ void standby_machine::inject_thread(std::thread &t) {
 }
 
 void standby_machine::update(int flag) {
-    if (TERMINATE_THREAD == flag) {
-        goingToBeTerminated = 1;
+
+    switch(flag) {
+        case THE_OTHER_IS_DEAD:
+            terminationFlag = MASTER_ASTERISK_STOP;
+        break;
+        default:
+            terminationFlag = 0;
     }
 }
 

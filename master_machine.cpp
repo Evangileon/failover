@@ -27,7 +27,7 @@ int needStatusSend = 1;
 #define MAX_FD_NUM 16
 int fds[MAX_FD_NUM];
 
-master_machine::master_machine() { goingToBeTerminated = 0; }
+master_machine::master_machine() { terminationFlag = 0; }
 master_machine::~master_machine() {}
 
 int master_machine::master_status_send_loop(int wfd) {
@@ -41,9 +41,10 @@ int master_machine::master_status_send_loop(int wfd) {
 
     while (1) {
 
-        if (goingToBeTerminated) {
-            ret = goingToBeTerminated;
-            break;
+        if (terminationFlag) {
+            if(STANDBY_FAIL == terminationFlag) {
+                std::cout << "standby is dead\n";
+            }
         }
 
         sleep(1);
@@ -189,8 +190,13 @@ void master_machine::inject_thread(std::thread &t) {
 }
 
 void master_machine::update(int flag) {
-    if (TERMINATE_THREAD == flag) {
-        goingToBeTerminated = 1;
+    
+    switch(flag) {
+        case THE_OTHER_IS_DEAD:
+            terminationFlag = STANDBY_FAIL;
+        break;
+        default:
+            terminationFlag = 0;
     }
 }
 

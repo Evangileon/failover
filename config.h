@@ -1,6 +1,8 @@
 #ifndef __CONFIG_H_JUN__
 #define __CONFIG_H_JUN__
 
+#include <string>
+
 #define IS_MASTER 1
 
 #define FAILOVER_SOCKET_PATH    "/var/run/failover/failover.ctl"
@@ -27,5 +29,28 @@
 #define SEND_BUFFER_SIZE 64
 
 #define MAX_RESTART_TIMES 3
+
+
+class config {
+
+	std::string config_doc = "./config.json";
+
+    std::string ip_master_heartbeat_send;
+    std::string ip_master_heartbeat_recv;
+    std::string ip_standby_heartbeat_send;
+    std::string ip_standby_heartbeat_recv;
+
+    config();
+public:
+    ~config() {}
+    
+    static config& instance() {
+    	static config _instance;
+    	return _instance;
+    }
+
+    void parse();
+    void set_config_path(const std::string& json_path) { config_doc = json_path; }
+};
 
 #endif

@@ -7,9 +7,12 @@
 #include <memory>
 #include <thread>
 
-#define MASTER_ASTERISK_STOP 2
+#include "observer.h"
 
-class master_machine {
+#define MASTER_ASTERISK_STOP 2
+#define STANDBY_FAIL 3
+
+class master_machine : public observer {
 public:
     master_machine();
     ~master_machine();
@@ -25,7 +28,7 @@ private:
 	int master_status_send_loop(int wfd);
 	std::thread master_thread;
 	int retval;
-    int goingToBeTerminated;
+    int terminationFlag;
 };
 
 

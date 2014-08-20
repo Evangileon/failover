@@ -115,6 +115,7 @@ void heartbeat::heartbeat_receive() {
             status = -1;
             needSend = 0;
             std::cout << "The other is dead\n";
+            notify_observers(THE_OTHER_IS_DEAD);
         } else {
             // nothing to do
             std::cout << "go to heartbeat receive loop\n";

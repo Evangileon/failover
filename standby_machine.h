@@ -19,7 +19,7 @@ private:
 	int status_receive_loop(int wfd);
 	std::thread standby_thread;
 	int retval;
-	int goingToBeTerminated;
+	int terminationFlag;
 };
 
 extern int needStatusSend;
