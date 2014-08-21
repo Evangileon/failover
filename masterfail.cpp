@@ -20,60 +20,6 @@
 #include "machine_interaction.h"
 #include "config.h"
 
-int receive_message_once() {
-    int ret = 0;
-	int sockfdq;
-
-    char MyHostNamee[_POSIX_HOST_NAME_MAX + 1];	    
-    gethostname(MyHostNamee,sizeof MyHostNamee);
-	
-    sockfdq = get_any_tcp_connection_ready(PORT, MAX_CONN_COUNT);
-    if(sockfdq < 0) {
-        ERROR("get connection readt %d\n", __LINE__);
-    }
-
-    int port;
-    int cli_sockfd_once = -1;
-    struct sockaddr_storage cli_addr_once;
-    memset(&cli_addr_once, 0, sizeof(cli_addr_once));
-    socklen_t clilen_once = 0;
-    char ipstr[INET6_ADDRSTRLEN + 1];
-    
-    fd_set rfds;
-	int iResult = select_with_timeout(sockfdq, &rfds, RECEIVE_ONCE_TIMEOUT);
-    
-    if(iResult < 0) {
-        perror("after select_with_timeout");
-    } else if(iResult == 0) {
-        ret = 0; // This is indeed the master
-        goto fail_once;
-    } else /*Result > 0*/ {
-        ret = -1;
-        if(!FD_ISSET(sockfdq, &rfds)) {
-            goto fail_once;
-        }
-        // need to confirm the connect is by 103
-        clilen_once = sizeof(cli_addr_once);
-        cli_sockfd_once = accept(sockfdq, (struct sockaddr *) &cli_addr_once, &clilen_once);
-        if(cli_sockfd_once < 0) {
-            std::cout << "errno = " << errno << std::endl;
-            perror("connect once accept");
-        }
-
-        // get socket info
-        struct sockaddr_in *s = (struct sockaddr_in *)&cli_addr_once;
-        port = ntohs(s -> sin_port);
-        inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof ipstr);
-        //std::cout << "Peer address: " << ipstr << ":" << port << std::endl;
-        std::cout << "Touched by another machine: " << ipstr << ":" << port << std::endl;;
-        std::cout << "count = " << iResult << std::endl;
-        ret = -1;
-    }
-
-fail_once:
-    close(sockfdq);
-    return ret;
-}
 
 int create_socket() {
 
@@ -95,7 +41,7 @@ int create_socket() {
      memset(&addr, 0, sizeof(struct sockaddr_un));
      /* Clear structure */
      addr.sun_family = AF_UNIX;
-     strncpy(addr.sun_path, FAILOVER_SOCKET_PATH, sizeof(addr.sun_path) - 1);
+     strncpy(addr.sun_path, config::instance().socket_failover_path.c_str(), sizeof(addr.sun_path) - 1);
 
      if ((bind(sfd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un))) < 0) {
          if(errno == EADDRINUSE) {
@@ -105,7 +51,7 @@ int create_socket() {
          exit(-1);
      }
     
-     std::ofstream pidFile(FAILOVER_PID_PATH);
+     std::ofstream pidFile(config::instance().pid_failover_path.c_str());
      pidFile << getpid();
      pidFile.close();
 
@@ -124,13 +70,13 @@ static void sig_term_handler(int signum) {
     
     //(*old_handler)(signum);
     
-    unlink(FAILOVER_SOCKET_PATH);
+    unlink(config::instance().socket_failover_path.c_str());
     exit(signum + 128);
 }
 
 static void sig_int_handler(int signum) {
 
-    unlink(FAILOVER_SOCKET_PATH);
+    unlink(config::instance().socket_failover_path.c_str());
     exit(signum + 128);
 }
 
@@ -163,7 +109,6 @@ void setup_signal_handler() {
 
 
 pthread_mutex_t masterMutex;
-static int isInitMaster;
 
 int main(int argc, char const *argv[]) {
 	int test = 0;
@@ -176,17 +121,18 @@ int main(int argc, char const *argv[]) {
     if(test) {
         std::cout << "This is a test\n";
     }
+
+    config::instance().parse();
     
     setup_signal_handler();
 
     struct master_status_mtx mas_sta;
 
-    if (IS_MASTER) {
+    if (config::instance().this_is_master) {
         init_as_master(&mas_sta);
     } else {
         init_as_standby(&mas_sta);
     }
-    isInitMaster = IS_MASTER;
 
     std::shared_ptr<heartbeat> hb = init_heartbeat();
 
@@ -237,7 +183,7 @@ int main(int argc, char const *argv[]) {
     //heartbeatSendThread.join();
     //heartbeatReceiveThread.join();
     std::cout << "After join\n";
-    unlink(FAILOVER_SOCKET_PATH);
+    unlink(config::instance().socket_failover_path.c_str());
     
     //close(sfd);
 

@@ -2,24 +2,24 @@
 
 EXECUTABLE := masterfail
 LIBS :=
-CC := g++
+CC := clang++
 LD := ld
-
-
 DEBUG_MODE := y
 
 ifeq ($(DEBUG_MODE), y)
 	DEBUG := -g
 	MACRO := -D__DEBUG__
+	OPTIM :=
 else
 	DEBUG :=
 	MACRO :=
+	OPTIM := -O2
 endif
 
 LIB += -L/usr/lib/x86_64-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -pthread
 CFLAGS := $(DEBUG) $(MACRO) -Wall
-CXXFLAGS := $(CFLAGS) -std=c++0x
-LDFLAGS := $(DEBUG) $(LIB)
+CXXFLAGS := $(CFLAGS) $(OPTIM) -std=c++0x
+LDFLAGS := $(DEBUG) $(LIB) $(OPTIM)
 
 RM-F := rm -f
 
@@ -55,4 +55,4 @@ endif
 -include $(DEPS)
 
 $(EXECUTABLE) : $(OBJS)
-	$(CC) -o $(EXECUTABLE) $(OBJS) $(LIB) $(addprefix -l,$(LIBS))
+	$(CC) -o $(EXECUTABLE) $(OBJS) $(LIB) $(OPTIM) $(addprefix -l,$(LIBS))

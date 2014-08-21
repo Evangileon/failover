@@ -21,6 +21,8 @@
 #include "thread_util.h"
 #include "observer.h"
 
+#include "config.h"
+
 
 int needStatusSend = 1;
 
@@ -104,7 +106,7 @@ void master_machine::master_status_send() {
     bzero((void *)&receiver_addr, sizeof(receiver_addr));
     receiver_addr.sin_family = AF_INET;
     receiver_addr.sin_addr.s_addr = inet_addr(STANDBY_ADDR);
-    receiver_addr.sin_port = htons(STATUS_PORT);
+    receiver_addr.sin_port = htons(config::instance().port_status_send);
 
     while (1) {
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
