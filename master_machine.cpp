@@ -105,8 +105,8 @@ void master_machine::master_status_send() {
     struct sockaddr_in receiver_addr;
     bzero((void *)&receiver_addr, sizeof(receiver_addr));
     receiver_addr.sin_family = AF_INET;
-    receiver_addr.sin_addr.s_addr = inet_addr(STANDBY_ADDR);
-    receiver_addr.sin_port = htons(config::instance().port_status_send);
+    receiver_addr.sin_addr.s_addr = inet_addr(config::instance().get_ip_standby_status_recv().c_str());
+    receiver_addr.sin_port = htons(config::instance().get_port_status_send());
 
     while (1) {
         sockfd = socket(AF_INET, SOCK_STREAM, 0);

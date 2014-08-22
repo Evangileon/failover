@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <utility>
 
 #include "json/json.h"
 
@@ -60,4 +61,13 @@ void config::parse() {
         root.get("port_heartbeat_send", 44445).asInt();
     port_heartbeat_recv =
         root.get("port_heartbeat_receive", 44446).asInt();
+}
+
+void config::update(int flag) {
+	if(flag == 0) {
+		return;
+	}
+
+	/// ToDo: synchronization issue
+	std::swap(ip_master_status_send, ip_standby_status_recv);
 }

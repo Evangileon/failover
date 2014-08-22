@@ -96,14 +96,14 @@ void standby_machine::status_receive() {
         ERROR("%s:%d\n", __FILE__, __LINE__);
     }  
 
-    if(get_any_tcp_connection_ready_socket(sockfd, config::instance().port_status_recv, MAX_CONN_COUNT) < 0) {
+    if(get_any_tcp_connection_ready_socket(sockfd, config::instance().get_port_status_recv(), MAX_CONN_COUNT) < 0) {
         perror("...");
         ERROR("%s:%d\n", __FILE__, __LINE__);
     }
 
     
     while(1) {
-        //sockfd = get_any_tcp_connection_ready_socket(sockfd, config::instance().port_heartbeat_recv, MAX_CONN_COUNT);
+        //sockfd = get_any_tcp_connection_ready_socket(sockfd, config::instance().get_port_heartbeat_recv, MAX_CONN_COUNT);
         if(sockfd < 0) {
             ERROR("%s, %d\n", __FILE__, __LINE__);
         }

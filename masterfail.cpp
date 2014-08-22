@@ -41,7 +41,7 @@ int create_socket() {
      memset(&addr, 0, sizeof(struct sockaddr_un));
      /* Clear structure */
      addr.sun_family = AF_UNIX;
-     strncpy(addr.sun_path, config::instance().socket_failover_path.c_str(), sizeof(addr.sun_path) - 1);
+     strncpy(addr.sun_path, config::instance().get_socket_failover_path().c_str(), sizeof(addr.sun_path) - 1);
 
      if ((bind(sfd, (struct sockaddr *) &addr, sizeof(struct sockaddr_un))) < 0) {
          if(errno == EADDRINUSE) {
@@ -51,7 +51,7 @@ int create_socket() {
          exit(-1);
      }
     
-     std::ofstream pidFile(config::instance().pid_failover_path.c_str());
+     std::ofstream pidFile(config::instance().get_pid_failover_path().c_str());
      pidFile << getpid();
      pidFile.close();
 
@@ -70,13 +70,13 @@ static void sig_term_handler(int signum) {
     
     //(*old_handler)(signum);
     
-    unlink(config::instance().socket_failover_path.c_str());
+    unlink(config::instance().get_socket_failover_path().c_str());
     exit(signum + 128);
 }
 
 static void sig_int_handler(int signum) {
 
-    unlink(config::instance().socket_failover_path.c_str());
+    unlink(config::instance().get_socket_failover_path().c_str());
     exit(signum + 128);
 }
 
@@ -128,7 +128,7 @@ int main(int argc, char const *argv[]) {
 
     struct master_status_mtx mas_sta;
 
-    if (config::instance().this_is_master) {
+    if (config::instance().is_this_is_master()) {
         init_as_master(&mas_sta);
     } else {
         init_as_standby(&mas_sta);
@@ -151,6 +151,7 @@ int main(int argc, char const *argv[]) {
             std::cout << "This is master" << std::endl;
             std::shared_ptr<master_machine> mm = init_master_machine();
             hb->attach_observer(std::dynamic_pointer_cast<observer>(mm));
+            hb->attach_observer(std::dynamic_pointer_cast<observer>(config::instance().shared()));
 
             mm->join();
 
@@ -163,6 +164,7 @@ int main(int argc, char const *argv[]) {
             std::cout << "This is standby" << std::endl;
             std::shared_ptr<standby_machine> sm = init_standby_machine();
             hb->attach_observer(std::dynamic_pointer_cast<observer>(sm));
+            hb->attach_observer(std::dynamic_pointer_cast<observer>(config::instance().shared()));
 
             sm->join();
             
@@ -183,7 +185,7 @@ int main(int argc, char const *argv[]) {
     //heartbeatSendThread.join();
     //heartbeatReceiveThread.join();
     std::cout << "After join\n";
-    unlink(config::instance().socket_failover_path.c_str());
+    unlink(config::instance().get_socket_failover_path().c_str());
     
     //close(sfd);
 

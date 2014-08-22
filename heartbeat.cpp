@@ -93,14 +93,14 @@ void heartbeat::heartbeat_receive() {
     socklen_t cli_len;
     cli_len = sizeof(cli_addr);
 
-    sockfd = get_any_tcp_connection_ready(config::instance().port_heartbeat_recv, MAX_CONN_COUNT);
+    sockfd = get_any_tcp_connection_ready(config::instance().get_port_heartbeat_recv(), MAX_CONN_COUNT);
     if ((sockfd) < 0) {
         perror("ERROR opening socket");
         ERROR("%d\n", __LINE__);
     }
 
     while (1) {
-        //sockfd = get_any_tcp_connection_ready_socket(sockfd, config::instance().port_heartbeat_recv, MAX_CONN_COUNT);
+        //sockfd = get_any_tcp_connection_ready_socket(sockfd, config::instance().get_port_heartbeat_recv(), MAX_CONN_COUNT);
         if (sockfd < 0) {
             ERROR("%s, %d\n", __FILE__, __LINE__);
         }
@@ -141,8 +141,8 @@ void heartbeat::heartbeat_send() {
     struct sockaddr_in receiver_addr;
     bzero((void *)&receiver_addr, sizeof(receiver_addr));
     receiver_addr.sin_family = AF_INET;
-    receiver_addr.sin_addr.s_addr = inet_addr(SERVER_ADDR);
-    receiver_addr.sin_port = htons(config::instance().port_heartbeat_recv);
+    receiver_addr.sin_addr.s_addr = inet_addr(config::instance().get_ip_master_heartbeat_recv().c_str());
+    receiver_addr.sin_port = htons(config::instance().get_port_heartbeat_recv());
 
     while (1) {
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
