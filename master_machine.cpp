@@ -29,7 +29,7 @@ int needStatusSend = 1;
 #define MAX_FD_NUM 16
 int fds[MAX_FD_NUM];
 
-master_machine::master_machine() { terminationFlag = 0; }
+master_machine::master_machine() { terminationFlag = 0; retval = 0; }
 master_machine::~master_machine() {}
 
 int master_machine::master_status_send_loop(int wfd) {

@@ -19,7 +19,7 @@ class subject
 {
 public:
 	subject() {}
-	~subject() {}
+	virtual ~subject() {}
 	
 	virtual void attach_observer(std::shared_ptr<observer> obs) = 0;
 	virtual void notify_observers(int flag) = 0;

@@ -6,8 +6,8 @@
 #include <unistd.h>
 
 #include <iostream>
-
 #include <string>
+
 #include "config.h"
 #include "util.h"
 #include "net_util.h"
@@ -19,6 +19,14 @@ int checkStatus() {
         ERROR("Can not exec ProcessChecker\n");
     }
     return counter;
+}
+
+int checkNetworking() {
+	int counter = system("NetworkingChecker.sh");
+	if(counter < 0) {
+		ERROR("Can not exec NetworkingChecker.sh\n");
+	}
+	return counter;
 }
 
 std::string checkResultStr(int counter) {

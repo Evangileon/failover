@@ -59,7 +59,7 @@ int yield_master(struct master_status_mtx *mas_sta) {
     return 0; // current status
 }
 
-thread_terminator::thread_terminator() {}
+thread_terminator::thread_terminator() { thread_id = 0; }
 thread_terminator::~thread_terminator() {}
 
 thread_terminator::thread_terminator(pthread_t id) {

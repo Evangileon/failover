@@ -10,7 +10,7 @@
 class heartbeat : public subject {
 public:
     heartbeat();
-    ~heartbeat();
+    virtual ~heartbeat();
 
     void start_heartbeat_send();
     void start_heartbeat_recv();

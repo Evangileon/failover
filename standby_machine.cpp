@@ -19,7 +19,7 @@
 #include "thread_util.h"
 #include "async_handle_asterisk.h"
 
-standby_machine::standby_machine() { terminationFlag = 0; }
+standby_machine::standby_machine() { terminationFlag = 0; retval = 0; }
 standby_machine::~standby_machine() {}
 
 int standby_machine::status_receive_loop(int rfd) {
