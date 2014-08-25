@@ -135,7 +135,7 @@ void master_machine::master_status_send() {
                 continue;
             }
 
-            perror("heartbeat connect to other fail");
+            perror("master status connect to other fail");
             continue;
         }
 
