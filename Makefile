@@ -1,6 +1,6 @@
 # Author Jun Yu
 
-EXECUTABLE := masterfail
+EXECUTABLE := master
 LIBS :=
 CC := clang++
 LD := ld

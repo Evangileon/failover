@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <utility>
+#include <memory>
 
 #include "json/json.h"
 
@@ -9,9 +10,11 @@
 #include "config.h"
 
 config::config() :
-		config_doc("./config.json"), port_heartbeat_recv("0.0.0.0"), port_heartbeat_send(
-				"0.0.0.0"), port_status_recv("0.0.0.0"), port_status_send(
-				"0.0.0.0"), this_is_master(false) {
+		this_is_master(false), config_doc("./config.json"), ip_master_heartbeat_send(
+				"0.0.0.0"), ip_master_heartbeat_recv("0.0.0.0"), ip_standby_heartbeat_send(
+				"0.0.0.0"), ip_standby_heartbeat_recv("0.0.0.0"), port_heartbeat_send(
+				0), port_heartbeat_recv(0), port_status_send(0), port_status_recv(
+				0) {
 }
 
 void config::parse() {
@@ -68,4 +71,9 @@ void config::update(int flag) {
 	 * ToDo: synchronization issue
 	 */
 	std::swap(ip_master_status_send, ip_standby_status_recv);
+}
+
+std::shared_ptr<config> config::shared() {
+	std::shared_ptr<config> px(this, null_deleter());
+	return px;
 }

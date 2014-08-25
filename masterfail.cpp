@@ -138,6 +138,7 @@ int main(int argc, char const *argv[]) {
 
     int machine_ret = 0;
 
+    // Infinite loop
     while(1) {
         // first check whether a master is alive
 
@@ -150,6 +151,8 @@ int main(int argc, char const *argv[]) {
 
             std::cout << "This is master" << std::endl;
             std::shared_ptr<master_machine> mm = init_master_machine();
+            // add machine instance to heartbeat observer
+            // It is an event-driven mechanism
             hb->attach_observer(std::dynamic_pointer_cast<observer>(mm));
             hb->attach_observer(std::dynamic_pointer_cast<observer>(config::instance().shared()));
 
@@ -174,6 +177,7 @@ int main(int argc, char const *argv[]) {
             }		
         }
 
+        // Clear observers
         hb->reset_observer();
     }
 

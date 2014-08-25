@@ -20,8 +20,15 @@
 
 #include "observer.h"
 
+struct null_deleter
+{
+    void operator()(void const *) const
+    {
+    }
+};
 
-class config : public observer, std::enable_shared_from_this<config> {
+
+class config : public observer {
 private:
 	bool this_is_master;
 
@@ -35,10 +42,10 @@ private:
     std::string ip_master_status_send;
     std::string ip_standby_status_recv;
 
-    int port_status_send;
-    int port_status_recv;
     int port_heartbeat_send;
     int port_heartbeat_recv;
+    int port_status_send;
+    int port_status_recv;
 
     std::string socket_failover_path;
     std::string pid_failover_path;
@@ -61,7 +68,7 @@ public:
     void parse();
     void set_config_path(const std::string& json_path) { config_doc = json_path; }
 
-    std::shared_ptr<config> shared() { return shared_from_this(); }
+    std::shared_ptr<config> shared();
 
 	const std::string& get_ip_master_heartbeat_recv() const {
 		return ip_master_heartbeat_recv;

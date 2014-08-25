@@ -16,5 +16,5 @@
 	"port_heartbeat_receive" : 44446,
 
 	"port_status_send" : 44444,
-	"port_status_receive" : 44444,
+	"port_status_receive" : 44444
 }
