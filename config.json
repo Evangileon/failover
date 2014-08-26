@@ -1,8 +1,8 @@
 {
 	"this_is_master" : true,
 
-	"ip_master_heartbeat_send" : "192.168.100.101",
-	"ip_master_heartbeat_receive" : "192.168.100.102",
+	"ip_heartbeat_send" : "192.168.100.101",
+	"ip_heartbeat_receive" : "192.168.100.102",
 	"ip_standby_heartbeat_send" : "192.168.100.201",
 	"ip_standby_heartbeat_receive" : "192.168.100.202",
 

@@ -36,44 +36,58 @@ int select_with_timeout(int sockfdq, fd_set* rfds, int time_sec) {
     return iResult;
 }
 
-int get_any_connection_ready(int sockfd, int domain, int protocal, int port, int count) {
-    
-    int sock;
-    if(sockfd != -1) {
-        sock = sockfd;
-    } else {
-        sock = socket(domain, protocal, 0);  
-        if ((sock) < 0) {                          
-            perror("ERROR opening socket");         
-            ERROR("%d\n", __LINE__);    
-        }       
-    
-        int net_optval = 1;                   
-        if(setsockopt((sock), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) { 
-            perror("errno on setsockopt");         
-            ERROR("%d\n", __LINE__);    
-        }
-    }
-    
-    struct sockaddr_in net_serv_addr;     
-    bzero((void *) &net_serv_addr, sizeof(net_serv_addr));                                
-    net_serv_addr.sin_family = domain;                 
-    net_serv_addr.sin_addr.s_addr = INADDR_ANY;         
-    net_serv_addr.sin_port = htons((port));             
-    if (bind((sock), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) < 0) { 
-        perror("ERROR on binding, receiveMessage");  
-        ERROR("%d\n", __LINE__);    
-    }                                               
-    if(listen((sock),(count)) < 0) {                
-        perror("listen, receiveMessage");           
-        ERROR("%d\n", __LINE__);    
-    }           
-    return sock;
+static int do_get_connection_ready(int sockfd, int domain, int protocal, in_addr_t addr, in_port_t port, int count) {
+	int sock;
+	    if(sockfd != -1) {
+	        sock = sockfd;
+	    } else {
+	        sock = socket(domain, protocal, 0);
+	        if ((sock) < 0) {
+	            perror("ERROR opening socket");
+	            ERROR("%d\n", __LINE__);
+	        }
+
+	        int net_optval = 1;
+	        if(setsockopt((sock), SOL_SOCKET, SO_REUSEADDR, &net_optval, sizeof net_optval) < 0) {
+	            perror("errno on setsockopt");
+	            ERROR("%d\n", __LINE__);
+	        }
+	    }
+
+	    struct sockaddr_in net_serv_addr;
+	    bzero((void *) &net_serv_addr, sizeof(net_serv_addr));
+	    net_serv_addr.sin_family = domain;
+	    net_serv_addr.sin_addr.s_addr = addr;
+	    net_serv_addr.sin_port = port;
+	    if (bind((sock), (struct sockaddr *) &net_serv_addr,sizeof(net_serv_addr)) < 0) {
+	        perror("ERROR on binding, receiveMessage");
+	        ERROR("%d\n", __LINE__);
+	    }
+	    if(listen((sock),(count)) < 0) {
+	        perror("listen, receiveMessage");
+	        ERROR("%d\n", __LINE__);
+	    }
+	    return sock;
 }
 
+int get_connection_ready(int sockfd, int domain, int protocal, const char* addr, in_port_t port, int count) {
+	return do_get_connection_ready(sockfd, domain, protocal, inet_addr(addr), htons(port), count);
+}
+
+int get_any_connection_ready(int sockfd, int domain, int protocal, int port, int count) {
+    return do_get_connection_ready(sockfd, domain, protocal, INADDR_ANY, htons(port), count);
+}
+
+int get_tcp_connection_ready_socket(int socket, const char* addr, int port, int count) {
+	return get_connection_ready(socket, AF_INET, SOCK_STREAM, addr, port, count);
+}
 
 int get_any_tcp_connection_ready_socket(int socket, int port, int count) {
     return get_any_connection_ready(socket, AF_INET, SOCK_STREAM, port, count);
+}
+
+int get_tcp_connection_ready(const char* addr, int port, int count) {
+	return get_connection_ready(-1, AF_INET, SOCK_STREAM, addr, port, count);
 }
 
 int get_any_tcp_connection_ready(int port, int count) {
@@ -136,6 +150,7 @@ int connect_nonblock(struct sockaddr_in* sa, int sock, int timeout) {
 
     if(error){  //check if we had a socket error
         errno = error;
+        perror("error: ");
         CUR_INFO();
         return -1;
     }
