@@ -9,12 +9,15 @@
 #include "util.h"
 #include "config.h"
 
+
 config::config() :
 		this_is_master(false), config_doc("./config.json"), ip_heartbeat_send_to(
-				"0.0.0.0"), ip_heartbeat_recv("0.0.0.0"), ip_standby_heartbeat_send(
-				"0.0.0.0"), ip_standby_heartbeat_recv("0.0.0.0"), port_heartbeat_send_to(
-				0), port_heartbeat_recv(0), port_status_send_to(0), port_status_recv(
-				0) {
+				"0.0.0.0"), ip_heartbeat_recv("0.0.0.0") {
+	port_heartbeat_sender = 0;
+	port_heartbeat_receiver = 0;
+	port_status_sender = 0;
+	port_status_receiver = 0;
+	connect_nonblock_timeout = 5;
 }
 
 void config::parse() {
@@ -39,10 +42,7 @@ void config::parse() {
 			"192.168.100.101").asString();
 	ip_heartbeat_recv = root.get("ip_heartbeat_receive",
 			"192.168.100.102").asString();
-	ip_standby_heartbeat_send = root.get("ip_standby_heartbeat_send",
-			"192.168.100.201").asString();
-	ip_standby_heartbeat_recv = root.get("ip_standby_heartbeat_receive",
-			"192.168.100.202").asString();
+	
 	// status related
 	ip_master_status_send_to =
 			root.get("ip_master_status_send_to", "10.176.15.200").asString();
@@ -56,10 +56,12 @@ void config::parse() {
 			"/var/run/failover/failover.pid").asString();
 
 	// port related
-	port_status_send_to = root.get("port_status_send", 44444).asInt();
-	port_status_recv = root.get("port_status_receive", 44444).asInt();
-	port_heartbeat_send_to = root.get("port_heartbeat_send", 44445).asInt();
-	port_heartbeat_recv = root.get("port_heartbeat_receive", 44446).asInt();
+	port_status_sender = root.get("port_status_sender", 44444).asInt();
+	port_status_receiver = root.get("port_status_receiver", 44444).asInt();
+	port_heartbeat_sender = root.get("port_heartbeat_sender", 44445).asInt();
+	port_heartbeat_receiver = root.get("port_heartbeat_receive", 44446).asInt();
+
+	connect_nonblock_timeout = root.get("connect_nonblock_timeout", 5).asUInt();
 }
 
 void config::update(int flag) {

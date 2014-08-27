@@ -38,19 +38,19 @@ private:
     //std::string ip_master_heartbeat_recv;
     std::string ip_heartbeat_send_to;
     std::string ip_heartbeat_recv;
-    std::string ip_standby_heartbeat_send;
-    std::string ip_standby_heartbeat_recv;
-
+    
     std::string ip_master_status_send_to;
     std::string ip_standby_status_recv;
 
-    int port_heartbeat_send_to;
-    int port_heartbeat_recv;
-    int port_status_send_to;
-    int port_status_recv;
+    int port_heartbeat_sender;
+    int port_heartbeat_receiver;
+    int port_status_sender;
+    int port_status_receiver;
 
     std::string socket_failover_path;
     std::string pid_failover_path;
+
+    unsigned connect_nonblock_timeout;
 
     std::map<uint, std::string> ip_map;  // id 0 is the master
 
@@ -80,32 +80,12 @@ public:
 		return ip_heartbeat_send_to;
 	}
 
-	const std::string& get_ip_standby_heartbeat_recv() const {
-		return ip_standby_heartbeat_recv;
-	}
-
-	const std::string& get_ip_standby_heartbeat_send() const {
-		return ip_standby_heartbeat_send;
-	}
-
 	const std::string& get_ip_standby_status_recv() const {
 		return ip_standby_status_recv;
 	}
 
 	const std::string& get_pid_failover_path() const {
 		return pid_failover_path;
-	}
-
-	int get_port_heartbeat_recv() const {
-		return port_heartbeat_recv;
-	}
-
-	int get_port_status_recv() const {
-		return port_status_recv;
-	}
-
-	int get_port_status_send_to() const {
-		return port_status_send_to;
 	}
 
 	const std::string& get_socket_failover_path() const {
@@ -120,8 +100,24 @@ public:
 		this_is_master = thisIsMaster;
 	}
 
-	int get_port_heartbeat_send_to() const {
-		return port_heartbeat_send_to;
+	int get_connect_nonblock_timeout() const {
+		return connect_nonblock_timeout;
+	}
+
+	int get_port_heartbeat_receiver() const {
+		return port_heartbeat_receiver;
+	}
+
+	int get_port_heartbeat_sender() const {
+		return port_heartbeat_sender;
+	}
+
+	int get_port_status_receiver() const {
+		return port_status_receiver;
+	}
+
+	int get_port_status_sender() const {
+		return port_status_sender;
 	}
 
 private:

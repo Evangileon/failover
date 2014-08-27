@@ -102,7 +102,7 @@ void standby_machine::status_receive() {
 
 		if (get_tcp_connection_ready_socket(sockfd,
 				config::instance().get_ip_standby_status_recv().c_str(),
-				config::instance().get_port_status_recv(), MAX_CONN_COUNT)
+				config::instance().get_port_status_receiver(), MAX_CONN_COUNT)
 				< 0) {
 			perror("...");
 			ERROR("%s:%d\n", __FILE__, __LINE__);
