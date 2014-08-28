@@ -88,7 +88,7 @@ int other_is_master() {
     socklen_t cli_len;
     cli_len = sizeof(cli_addr);
 
-    sockfd = get_any_tcp_connection_ready(config::instance().get_port_status_recv(), MAX_CONN_COUNT);
+    sockfd = get_any_tcp_connection_ready(config::instance().get_port_status_receiver(), MAX_CONN_COUNT);
     if (sockfd < 0) {
         ERROR("%s, %d\n", __FILE__, __LINE__);
     }

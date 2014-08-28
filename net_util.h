@@ -20,5 +20,6 @@ extern int get_any_tcp_connection_ready_socket(int, int, int);
 extern int connect_nonblock_raw(struct sockaddr_in* sa, int sock, unsigned timeout);
 extern int connect_nonblock(const char* addr, int port, int sockfd, unsigned timeout_sec);
 extern int sender_bind(const char* addr, int port, int sockfd);
+extern int enable_direct_link(int sockfd);
 
 #endif

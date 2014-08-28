@@ -106,6 +106,10 @@ void heartbeat::heartbeat_receive() {
             ERROR("%s, %d\n", __FILE__, __LINE__);
         }
 
+        if (config::instance().is_heartbeat_direct_link()) {
+			enable_direct_link(sockfd);
+		}
+
         ret = select_with_timeout(sockfd, &rfds, 5);
         if (ret < 0) {
             perror("after select");
@@ -161,7 +165,11 @@ void heartbeat::heartbeat_send() {
             ERROR("%d\n", __LINE__);
         }
 
-        sender_bind(sender_addr, sender_port, sockfd);
+        if(config::instance().is_heartbeat_direct_link()) {
+        	enable_direct_link(sockfd);
+        }
+
+        sender_bind(NULL, sender_port, sockfd);
 
         int ret = connect_nonblock(receiver_addr, receiver_port, sockfd,
                                    timeout);
@@ -173,8 +181,8 @@ void heartbeat::heartbeat_send() {
             }
 
             perror("heartbeat connect after nonblock");
-            CUR_INFO()
-            ;
+            printf("Requested address: %s:%d\n", receiver_addr, receiver_port);
+            CUR_INFO();
             //ERROR("%s:%d\n", __FILE__, __LINE__);
         }
 

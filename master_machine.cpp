@@ -65,6 +65,7 @@ int master_machine::master_status_send_loop(int wfd) {
             if (restartCount == MAX_RESTART_TIMES) {
                 whatToSend = "down";
                 restartCount = 0;
+                std::cout << "Going to shut down asterisk on this machine" << std::endl;
                 async_handle_asterisk::stop();
                 end_status_send_loop = true;
             } else {
@@ -131,7 +132,11 @@ void master_machine::master_status_send() {
         // ensure the fd will be closed while calling pthread_cancel
         pthread_cleanup_push(&cleanup_handler, (void *)((long)sockfd));
 
-        sender_bind(sender_addr, sender_port, sockfd);
+        if (config::instance().is_status_direct_link()) {
+            enable_direct_link(sockfd);
+        }
+
+        sender_bind(NULL, sender_port, sockfd);
 
         int ret = connect_nonblock(receiver_addr, receiver_port, sockfd,
                                    timeout);
@@ -143,6 +148,7 @@ void master_machine::master_status_send() {
             }
 
             perror("master status connect to other fail");
+            printf("Requested address: %s:%d\n", receiver_addr, receiver_port);
             continue;
         }
 

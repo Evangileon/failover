@@ -53,9 +53,7 @@ static int do_get_connection_ready(int sockfd, int domain, int protocal,
         if (setsockopt((sock), SOL_SOCKET, SO_REUSEADDR, &net_optval,
                        sizeof net_optval) < 0) {
             perror("errno on setsockopt");
-
-            CUR_ERR()
-            ;
+            CUR_ERR();
         }
     }
 
@@ -68,15 +66,13 @@ static int do_get_connection_ready(int sockfd, int domain, int protocal,
             < 0) {
         perror("Error on bind");
         char addr_err[20];
-        inet_ntop(AF_INET, (void *) &(net_serv_addr.sin_addr), addr_err, sizeof(addr_err));
+        inet_ntop(AF_INET, (void *) & (net_serv_addr.sin_addr), addr_err, sizeof(addr_err));
         printf("Requested address: %s:%d\n", addr_err, port);
-        CUR_ERR()
-        ;
+        CUR_ERR();
     }
     if (listen((sock), (count)) < 0) {
         perror("Error on listen");
-        CUR_ERR()
-        ;
+        CUR_ERR();
     }
     return sock;
 }
@@ -137,8 +133,7 @@ int connect_nonblock_raw(struct sockaddr_in *sa, int sock, unsigned timeout) {
 
     if ((ret = connect(sock, (struct sockaddr *) sa, 16)) < 0) {
         if (errno != EINPROGRESS) {
-            CUR_INFO()
-            ;
+            CUR_INFO();
             return -1;
         }
     }
@@ -161,27 +156,23 @@ int connect_nonblock_raw(struct sockaddr_in *sa, int sock, unsigned timeout) {
 
     if (FD_ISSET(sock, &rset) || FD_ISSET(sock, &wset)) {
         if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-            CUR_INFO()
-            ;
+            CUR_INFO();
             return -1;
         }
     } else {
-        CUR_INFO()
-        ;
+        CUR_INFO();
         return -1;
     }
 
     if (error) {  //check if we had a socket error
         errno = error;
         perror("error: ");
-        CUR_INFO()
-        ;
+        CUR_INFO();
         return -1;
     }
 
 nonblock_done: if (fcntl(sock, F_SETFL, flags) < 0) {
-        CUR_INFO()
-        ;
+        CUR_INFO();
         return -1;
     }
 
@@ -203,14 +194,35 @@ int sender_bind(const char *addr, int port, int sockfd) {
     struct sockaddr_in sender_addr;
     bzero((void *) &sender_addr, sizeof(sender_addr));
     sender_addr.sin_family = AF_INET;
-    sender_addr.sin_addr.s_addr = inet_addr(addr);
+    if (addr == NULL) {
+        sender_addr.sin_addr.s_addr = INADDR_ANY;
+    } else {
+        sender_addr.sin_addr.s_addr = inet_addr(addr);
+    }
     sender_addr.sin_port = htons(port);
 
+    int net_optval = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &net_optval,
+                   sizeof net_optval) < 0) {
+        perror("errno on setsockopt");
+        CUR_ERR();
+    }
+
     if (bind(sockfd, (sockaddr *) &sender_addr, sizeof(sender_addr)) < 0) {
-        perror("heartbeat sender bind:");
-        CUR_ERR()
-        ;
+        perror("sender bind:");
+        printf("Requested address: %s:%d\n", addr, port);
+        CUR_ERR();
     }
 
     return 0;
+}
+
+int enable_direct_link(int sockfd) {
+    int net_optval = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_DONTROUTE, &net_optval,
+                   sizeof net_optval) < 0) {
+        perror("errno on setsockopt");
+        CUR_ERR();
+    }
+    return -1;
 }

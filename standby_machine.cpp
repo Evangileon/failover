@@ -100,6 +100,10 @@ void standby_machine::status_receive() {
 			ERROR("%s:%d\n", __FILE__, __LINE__);
 		}
 
+		if (config::instance().is_status_direct_link()) {
+			enable_direct_link(sockfd);
+		}
+
 		if (get_tcp_connection_ready_socket(sockfd,
 				config::instance().get_ip_standby_status_recv().c_str(),
 				config::instance().get_port_status_receiver(), MAX_CONN_COUNT)

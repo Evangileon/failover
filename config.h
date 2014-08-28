@@ -18,6 +18,8 @@
 #define SEND_BUFFER_SIZE 64
 #define MAX_RESTART_TIMES 3
 
+#include "json/json.h"
+
 #include "observer.h"
 
 struct null_deleter
@@ -30,7 +32,11 @@ struct null_deleter
 
 class config : public observer {
 private:
+	Json::Value root;
+
 	bool this_is_master;
+	bool heartbeat_direct_link;
+	bool status_direct_link;
 
 	std::string config_doc;
 
@@ -119,6 +125,16 @@ public:
 	int get_port_status_sender() const {
 		return port_status_sender;
 	}
+
+	bool is_heartbeat_direct_link() const {
+		return heartbeat_direct_link;
+	}
+
+	bool is_status_direct_link() const {
+		return status_direct_link;
+	}
+
+	void dump_config_file(std::string) const;
 
 private:
 	virtual void update(int flag);

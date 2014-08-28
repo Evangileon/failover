@@ -138,6 +138,8 @@ int main(int argc, char const *argv[]) {
 
     int machine_ret = 0;
 
+    config::instance().dump_config_file("dump_config");
+
     // Infinite loop
     while(1) {
         // first check whether a master is alive

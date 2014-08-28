@@ -2,60 +2,45 @@
 #running. The first line in ProcessList.txt specifies the number of processes to
 #look for.
 
-#The variable 'values' holds the filename of the ProcessList.
+#The variable 'LISTFILE' holds the filename of the ProcessList.
 
 #exit status
 #0-Status Green (all required processes found and running)
 #1-One or more duplicate processes found
 #2-Some of the required processes not running
-#3-Cannot open the given file name in the values variable
+#3-Cannot open the given file name in the LISTFILE variable
 
 #use 'echo $?' command after the program terminates to find the status
 
 count=0
-values="ProcessList.txt"
 firstLine=0
 initialCount=0
 
-if ! [ -f $values  ]
-then
-   echo "file $values do not exist"
-   exit 3
-fi
+PROCLIST=(
+   "/usr/sbin/asterisk"
+   "/usr/sbin/safe_asterisk"
+)
 
-while read LINE
-do
-   echo "$LINE" | grep -q "^#.*"
-   if [ $? -eq 0 ]
-   then
-      continue
-   fi
-   if [ $firstLine -eq 0  ]
-   then
-      count=${LINE%#*}
-      initialCount=$count
-      firstLine=1
-      continue
+initialCount=${#PROCLIST[@]}
+
+for proc in ${PROCLIST[*]}; do
+
+   PCOUNT=$(ps aux | grep $proc | grep -v grep | wc -l)
+      
+   if [ $PCOUNT -ne 0 ]; then
+      c=$(ps aux | grep $proc | grep -v grep | awk ' { print $2 } ')
+      echo $PCOUNT process found with the name $proc with PID $c
+      count=$(($count + $PCOUNT))
    else
-		b=${LINE%#*}
-      b=${b%[*}
-      if [ -z "$b" ]
-      then
-         continue
-      fi
-		PCOUNT=$(ps aux | grep "$b" | grep -v grep | wc -l)
-		if [ $PCOUNT -ne 0 ]
-      then
-         c=$(ps aux | grep "$b" | grep -v grep | awk ' { print $2 } ')
-         echo $PCOUNT process found with the name $b with PID $c
-			count=$((count-PCOUNT))
-      else
-			echo no process found with the name $b
-		fi
-	fi
-done < "$values"
+      echo no process found with the name $proc
+   fi
+done
 
-if [ $count -eq 0 ];then
+echo "last count $count"
+count=$(($initialCount - $count))
+
+if [ $count -eq 0 ]
+then
 	echo status green
    exit 0
 elif [ $count -lt 0 ]
