@@ -83,7 +83,7 @@ void config::update(int flag) {
 	/**
 	 * ToDo: synchronization issue
 	 */
-	std::swap(ip_master_status_send_to, ip_standby_status_recv);
+	//std::swap(ip_master_status_send_to, ip_standby_status_recv);
 }
 
 std::shared_ptr<config> config::shared() {

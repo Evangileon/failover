@@ -128,6 +128,8 @@ void standby_machine::status_receive() {
 				//status = -1;
 				needStatusSend = 0;
 				std::cout << "Not receive status from master\n";
+				thread_exit_val = MASTER_ASTERISK_STOP;
+				break;
 			} else {
 				// nothing to do
 				std::cout << "status receive loop\n";

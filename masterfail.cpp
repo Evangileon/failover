@@ -18,6 +18,7 @@
 #include "master_machine.h"
 #include "standby_machine.h"
 #include "machine_interaction.h"
+#include "async_handle_asterisk.h"
 #include "config.h"
 
 
@@ -58,57 +59,6 @@ int create_socket() {
      return sfd;
 }
 
-static struct sigaction old_act;
-typedef void (*custom_sa_handler)(int);
-
-static void sig_term_handler(int signum) {
-   
-    //if(NULL == old_handler) {
-    //    printf("Unexpected exception\n");
-    //    exit(-1);
-    //}
-    
-    //(*old_handler)(signum);
-    
-    unlink(config::instance().get_socket_failover_path().c_str());
-    exit(signum + 128);
-}
-
-static void sig_int_handler(int signum) {
-
-    unlink(config::instance().get_socket_failover_path().c_str());
-    exit(signum + 128);
-}
-
-void setup_signal_handler() {
-	struct sigaction term_act;
-    struct sigaction int_act;
-
-    memset(&term_act, 0, sizeof(term_act));
-    term_act.sa_handler = &sig_term_handler;
-    
-    if(sigaction(SIGTERM, NULL, &old_act) == -1) {
-        perror("Can not get old handler of term signal");
-        exit(-1);
-    }
-    
-    if(sigaction(SIGTERM, &term_act, NULL) == -1) {
-        perror("Can not set new handler of term signal");
-        exit(-1);
-    }
-    
-    memset(&int_act, 0, sizeof(int_act));
-    int_act.sa_handler = &sig_int_handler;
-    if(sigaction(SIGINT, &int_act, NULL) == -1) {
-        perror("Can not set int signal");
-        exit(-1);
-    }
-}
-
-
-
-
-pthread_mutex_t masterMutex;
 
 int main(int argc, char const *argv[]) {
 	int test = 0;
@@ -147,11 +97,14 @@ int main(int argc, char const *argv[]) {
         if(is_this_master(&mas_sta)) {
             // first check whether a master is alive
             if(other_is_master()) {
+            	async_handle_asterisk::stop();
                 yield_master(&mas_sta);
                 continue;
             }
 
             std::cout << "This is master" << std::endl;
+            async_handle_asterisk::start();
+
             std::shared_ptr<master_machine> mm = init_master_machine();
             // add machine instance to heartbeat observer
             // It is an event-driven mechanism
@@ -162,11 +115,15 @@ int main(int argc, char const *argv[]) {
 
             machine_ret = mm->get_machine_retval();
             if(machine_ret == MASTER_ASTERISK_STOP) {
+            	std::cout << "yield master" << std::endl;
+            	async_handle_asterisk::stop();
                 yield_master(&mas_sta);
             }
 
         } else {
             std::cout << "This is standby" << std::endl;
+            async_handle_asterisk::stop();
+
             std::shared_ptr<standby_machine> sm = init_standby_machine();
             hb->attach_observer(std::dynamic_pointer_cast<observer>(sm));
             hb->attach_observer(std::dynamic_pointer_cast<observer>(config::instance().shared()));
@@ -175,6 +132,8 @@ int main(int argc, char const *argv[]) {
             
             machine_ret = sm->get_machine_retval();
             if(machine_ret == MASTER_ASTERISK_STOP) {
+            	std::cout << "seize master" << std::endl;
+            	async_handle_asterisk::start();
                 seize_master(&mas_sta);
             }		
         }

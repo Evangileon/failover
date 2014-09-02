@@ -44,7 +44,8 @@ int heartbeat::heartbeat_receive_loop(int rfd) {
         if (ret != 16) {
             break;
         }
-        std::cout << "heartbeat recv succeed\n";
+        notify_observers(THE_OTHER_IS_ALIVE);
+        std::cout << "heartbeat recv succeed" << std::endl;
         sleep(1);
     }
 
@@ -58,9 +59,7 @@ int heartbeat::heartbeat_send_loop(int wfd) {
 
     while (1) {
         sleep(1);
-        if (!needSend) {
-            break;
-        }
+
         ret = select_write_with_timeout(wfd, &wfds, 5);
         if (ret <= 0) {
             break;
@@ -74,7 +73,7 @@ int heartbeat::heartbeat_send_loop(int wfd) {
         if (ret != 16) {
             break;
         }
-        std::cout << "heartbeat send succeed\n";
+        std::cout << "heartbeat send succeed" << std::endl;
     }
 
     return ret;
@@ -119,11 +118,11 @@ void heartbeat::heartbeat_receive() {
             // the other one is dead
             status = -1;
             needSend = 0;
-            std::cout << "The other is dead\n";
+            std::cout << "The other is dead" << std::endl;
             notify_observers(THE_OTHER_IS_DEAD);
         } else {
             // nothing to do
-            std::cout << "go to heartbeat receive loop\n";
+            std::cout << "go to heartbeat receive loop" << std::endl;
             int cfd = accept(sockfd, (struct sockaddr *) &cli_addr, &cli_len);
             if (cfd < 0) {
                 perror("It shouldn't be error");
@@ -176,7 +175,7 @@ void heartbeat::heartbeat_send() {
                                    timeout);
         if (ret < 0) {
             if (errno == ECONNREFUSED) {
-                std::cout << "connection refused\n";
+                std::cout << "connection refused" << std::endl;
                 sleep(1);
                 continue;
             }
@@ -192,9 +191,9 @@ void heartbeat::heartbeat_send() {
             continue;
         }
 
-        std::cout << "go to send loop\n";
+        std::cout << "go to send loop" << std::endl;
         heartbeat_send_loop(sockfd);
-        std::cout << "cease sending\n";
+        std::cout << "cease sending" << std::endl;
         close(sockfd);
     }
 }
