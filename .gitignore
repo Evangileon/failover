@@ -6,3 +6,7 @@ master
 *.d
 *.swo
 *.sublime-workspace
+
+.cproject
+.project
+.settings/*
