@@ -1,6 +1,7 @@
 
 #include <thread>
 #include <mutex>
+#include <iostream>
 
 #include <semaphore.h>
 #include <stdio.h>
@@ -10,14 +11,14 @@
 
 void async_handle_asterisk::handle_loop() {
 	while(1) {
-		sem_wait(&instance().work_sem);
+		sem_wait(&work_sem);
 		
-		instance().critical_lock.lock();
+		critical_lock.lock();
 		
-		instance().queue_lock.lock();
-		int handle = instance().handle_queue.front();
-		instance().handle_queue.pop();
-		instance().queue_lock.unlock();
+		queue_lock.lock();
+		int handle = handle_queue.front();
+		handle_queue.pop();
+		queue_lock.unlock();
 
 		switch(handle) {
 			case ASTERISK_START:
@@ -33,15 +34,15 @@ void async_handle_asterisk::handle_loop() {
 				DEBUG("Unknown handle code");
 		}
 
-		instance().critical_lock.unlock();
+		critical_lock.unlock();
 	}
 }
 
 async_handle_asterisk::async_handle_asterisk() {
-	if (sem_init(&instance().work_sem, 0, 0) < 0) {
+	if (sem_init(&work_sem, 0, 0) < 0) {
 		perror("semaphore");
 	}
-	handleThread = new std::thread(&async_handle_asterisk::handle_loop);
+	handleThread = new std::thread(&async_handle_asterisk::handle_loop, this);
 	handleThread->detach();
 }
 
@@ -62,9 +63,10 @@ int async_handle_asterisk::start() {
 	if (sem_post(&instance().work_sem) < 0) {
 		perror("Can not post semaphore");
 		ERROR("Can not post semaphore\n");
-		return 0;
+		return -1;
 	}
-	return 1;
+	std::cout << "Asterisk start succeed" << std::endl;
+	return 0;
 }
 
 int async_handle_asterisk::restart() {
@@ -75,9 +77,10 @@ int async_handle_asterisk::restart() {
 	if (sem_post(&instance().work_sem) < 0) {
 		perror("Can not post semaphore");
 		ERROR("Can not post semaphore\n");
-		return 0;
+		return -1;
 	}
-	return 1;
+	std::cout << "Asterisk restart succeed" << std::endl;
+	return 0;
 }
 
 int async_handle_asterisk::stop() {
@@ -88,7 +91,8 @@ int async_handle_asterisk::stop() {
 	if (sem_post(&instance().work_sem) < 0) {
 		perror("Can not post semaphore");
 		ERROR("Can not post semaphore\n");
-		return 0;
+		return -1;
 	}
-	return 1;
+	std::cout << "Asterisk stop succeed" << std::endl;
+	return 0;
 }

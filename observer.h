@@ -5,6 +5,7 @@
 
 #define TERMINATE_THREAD (-1)
 #define THE_OTHER_IS_DEAD  (-2)
+#define THE_OTHER_IS_ALIVE (-3)
 
 class observer
 {

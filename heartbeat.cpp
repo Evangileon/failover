@@ -129,6 +129,7 @@ void heartbeat::heartbeat_receive() {
                 perror("It shouldn't be error");
             }
             needSend = 1;
+            notify_observers(THE_OTHER_IS_ALIVE);
             heartbeat_receive_loop(cfd);
             close(cfd);
         }

@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 #include "config.h"
 #include "util.h"
@@ -14,19 +15,19 @@
 #include "status_check.h"
 
 int checkStatus() {
-    int counter = system("ProcessChecker.sh");
-    if (counter < 0) {
+    int status = std::system("/bin/bash /usr/sbin/ProcessChecker.sh");
+    if (status < 0) {
         ERROR("Can not exec ProcessChecker\n");
     }
-    return counter;
+    return WEXITSTATUS(status);
 }
 
 int checkNetworking() {
-    int counter = system("NetworkingChecker.sh");
-    if (counter < 0) {
+    int status = std::system("/bin/bash /usr/sbin/NetworkingChecker.sh");
+    if (status < 0) {
         ERROR("Can not exec NetworkingChecker.sh\n");
     }
-    return counter;
+    return WEXITSTATUS(status);
 }
 
 /**

@@ -15,7 +15,7 @@
 class async_handle_asterisk
 {
 private:
-	static void handle_loop();
+	void handle_loop();
 
 	std::thread *handleThread;
 	sem_t work_sem;

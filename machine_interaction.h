@@ -3,6 +3,13 @@
 
 #include <pthread.h>
 
+#define MASTER_ASTERISK_FINE 1
+#define MASTER_ASTERISK_STOP 2
+#define MASTER_ALIVE 3
+#define MASTER_FAIL 4
+#define STANDBY_ALIVE 5
+#define STANDBY_FAIL 6
+
 struct master_status_mtx {
 	int isMaster;
 	pthread_mutex_t mutex;

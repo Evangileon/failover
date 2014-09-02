@@ -14,7 +14,7 @@
 #include "util.h"
 #include "net_util.h"
 #include "standby_machine.h"
-#include "master_machine.h"
+#include "machine_interaction.h"
 #include "status_check.h"
 #include "thread_util.h"
 #include "async_handle_asterisk.h"
@@ -34,8 +34,8 @@ int standby_machine::status_receive_loop(int rfd) {
 	while (1) {
 
 		if (terminationFlag) {
-			if (MASTER_ASTERISK_STOP == terminationFlag) {
-				ret = MASTER_ASTERISK_STOP;
+			if (MASTER_FAIL == terminationFlag) {
+				ret = MASTER_FAIL;
 				break;
 			}
 		}
@@ -142,7 +142,7 @@ void standby_machine::status_receive() {
 
 					needStatusSend = 1;
 					int masterStatus = status_receive_loop(cfd);
-					if (masterStatus == MASTER_ASTERISK_STOP) {
+					if (masterStatus == MASTER_ASTERISK_STOP || masterStatus == MASTER_FAIL) {
 						close(cfd);
 						thread_exit_val = MASTER_ASTERISK_STOP;
 						break;
@@ -160,35 +160,6 @@ void standby_machine::status_receive() {
 	//return NULL;
 }
 
-/*int standby_machine(pthread_t *thread_id) {
- system("/sbin/ifdown eth2");
- async_handle_asterisk::stop();
-
- int ret;
- int exit_val = 0;
- pthread_t standby_thread;
- //struct thread_info *tinfo;
- pthread_attr_t attr;
-
- if((ret = pthread_attr_init(&attr)) != 0) {
- ERROR("Create init thread attr error: %d\n", ret);
- }
-
- if((ret = sem_init(&status_send_end_sem, 0, 0)) != 0) {
- ERROR("semaphore init thread attr error: %d\n", ret);
- }
-
- if((ret = pthread_create(&standby_thread, &attr, &status_receive, (void *)&exit_val)) != 0) {
- ERROR("Create thread error: %d\n", ret);
- }
-
- if((ret = pthread_join(standby_thread, NULL)) != 0) {
- perror("Can not join");
- }
-
- return exit_val;
- }*/
-
 void standby_machine::inject_thread(std::thread &t) {
 	standby_thread.swap(t);
 }
@@ -197,7 +168,10 @@ void standby_machine::update(int flag) {
 
 	switch (flag) {
 	case THE_OTHER_IS_DEAD:
-		terminationFlag = MASTER_ASTERISK_STOP;
+		terminationFlag = MASTER_FAIL;
+		break;
+	case THE_OTHER_IS_ALIVE:
+		terminationFlag = MASTER_ALIVE;
 		break;
 	default:
 		terminationFlag = 0;

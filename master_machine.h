@@ -9,8 +9,6 @@
 
 #include "observer.h"
 
-#define MASTER_ASTERISK_STOP 2
-#define STANDBY_FAIL 3
 
 class master_machine : public observer {
 public:

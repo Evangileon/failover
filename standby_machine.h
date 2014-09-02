@@ -1,7 +1,6 @@
 #ifndef __STANDBY_MACHINE_H_JUN__
 #define __STANDBY_MACHINE_H_JUN__
 
-#include "master_machine.h"
 #include "observer.h"
 
 class standby_machine : public observer

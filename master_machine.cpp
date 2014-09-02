@@ -15,6 +15,7 @@
 #include "util.h"
 #include "net_util.h"
 #include "master_machine.h"
+#include "machine_interaction.h"
 #include "status_check.h"
 #include "async_handle_asterisk.h"
 #include "thread_util.h"
@@ -46,13 +47,15 @@ int master_machine::master_status_send_loop(int wfd) {
     while (1) {
 
         if (terminationFlag) {
+        	std::cout << "Termination flag = " << terminationFlag << std::endl;
             if (STANDBY_FAIL == terminationFlag) {
-                std::cout << "standby is dead\n";
+                std::cout << "standby is dead" << std::endl;
             }
         }
 
         sleep(1);
         if (!needStatusSend) {
+        	std::cout << "No need to send status" << std::endl;
             break;
         }
 
@@ -184,6 +187,9 @@ void master_machine::update(int flag) {
     case THE_OTHER_IS_DEAD:
         terminationFlag = STANDBY_FAIL;
         break;
+    case THE_OTHER_IS_ALIVE:
+    	terminationFlag = STANDBY_ALIVE;
+    	break;
     default:
         terminationFlag = 0;
     }

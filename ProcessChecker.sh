@@ -1,16 +1,7 @@
-#Look at the Processlist.txt file and chekc if all the required processes are
-#running. The first line in ProcessList.txt specifies the number of processes to
-#look for.
-
-#The variable 'LISTFILE' holds the filename of the ProcessList.
-
-#exit status
-#0-Status Green (all required processes found and running)
-#1-One or more duplicate processes found
-#2-Some of the required processes not running
-#3-Cannot open the given file name in the LISTFILE variable
+#!/bin/bash
 
 #use 'echo $?' command after the program terminates to find the status
+
 
 count=0
 firstLine=0
@@ -53,4 +44,6 @@ then
    found=$((initialCount-count))
    echo required $initialCount, found $found
    exit 2
+else
+   exit 0
 fi
