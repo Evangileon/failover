@@ -11,8 +11,8 @@
 
 
 config::config() :
-		this_is_master(false), config_doc("./config.json"), ip_heartbeat_send_to(
-				"0.0.0.0"), ip_heartbeat_recv("0.0.0.0") {
+		this_is_master(false), config_doc("./config.json"), ip_heartbeat_receiver(
+				"0.0.0.0"), ip_heartbeat_sender("0.0.0.0") {
 	heartbeat_direct_link = false;
 	status_direct_link = false;
 	port_heartbeat_sender = 0;
@@ -49,15 +49,15 @@ void config::parse() {
 
 	// IP address
 	// heartbeat related
-	ip_heartbeat_send_to = root.get("ip_heartbeat_send_to",
+	ip_heartbeat_receiver = root.get("ip_heartbeat_receiver",
 			"192.168.100.101").asString();
-	ip_heartbeat_recv = root.get("ip_heartbeat_receive",
+	ip_heartbeat_sender = root.get("ip_heartbeat_sender",
 			"192.168.100.102").asString();
 	
 	// status related
-	ip_master_status_send_to =
-			root.get("ip_master_status_send_to", "10.176.15.200").asString();
-	ip_standby_status_recv = root.get("ip_standby_status_receive",
+	ip_master_status_receiver =
+			root.get("ip_master_status_receiver", "10.176.15.200").asString();
+	ip_standby_status_sender = root.get("ip_standby_status_sender",
 			"10.176.15.201").asString();
 
 	// consistency related

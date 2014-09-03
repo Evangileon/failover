@@ -5,7 +5,6 @@
 #include <memory>
 #include <map>
 
-
 #define RECEIVE_ONCE_TIMEOUT 5
 #define RECEIVE_TIMEOUT 5
 
@@ -22,15 +21,12 @@
 
 #include "observer.h"
 
-struct null_deleter
-{
-    void operator()(void const *) const
-    {
-    }
+struct null_deleter {
+	void operator()(void const *) const {
+	}
 };
 
-
-class config : public observer {
+class config: public observer {
 private:
 	Json::Value root;
 
@@ -40,54 +36,57 @@ private:
 
 	std::string config_doc;
 
-    //std::string ip_master_heartbeat_send;
-    //std::string ip_master_heartbeat_recv;
-    std::string ip_heartbeat_send_to;
-    std::string ip_heartbeat_recv;
-    
-    std::string ip_master_status_send_to;
-    std::string ip_standby_status_recv;
+	//std::string ip_master_heartbeat_send;
+	//std::string ip_master_heartbeat_recv;
+	std::string ip_heartbeat_receiver;
+	std::string ip_heartbeat_sender;
 
-    int port_heartbeat_sender;
-    int port_heartbeat_receiver;
-    int port_status_sender;
-    int port_status_receiver;
+	std::string ip_master_status_receiver;
+	std::string ip_standby_status_sender;
 
-    std::string socket_failover_path;
-    std::string pid_failover_path;
+	int port_heartbeat_sender;
+	int port_heartbeat_receiver;
+	int port_status_sender;
+	int port_status_receiver;
 
-    unsigned connect_nonblock_timeout;
+	std::string socket_failover_path;
+	std::string pid_failover_path;
 
-    std::map<uint, std::string> ip_map;  // id 0 is the master
+	unsigned connect_nonblock_timeout;
 
-    config();
+	std::map<uint, std::string> ip_map;  // id 0 is the master
+
+	config();
 public:
-    ~config() {}
-    
-    static config& instance() {
-    	static config _instance;
-    	return _instance;
-    }
-
-    const std::string& get_ip_master_status_send_to() const { return ip_master_status_send_to; }
-    
-    
-
-    void parse();
-    void set_config_path(const std::string& json_path) { config_doc = json_path; }
-
-    std::shared_ptr<config> shared();
-
-	const std::string& get_ip_heartbeat_recv() const {
-		return ip_heartbeat_recv;
+	~config() {
 	}
 
-	const std::string& get_ip_heartbeat_send_to() const {
-		return ip_heartbeat_send_to;
+	static config& instance() {
+		static config _instance;
+		return _instance;
 	}
 
-	const std::string& get_ip_standby_status_recv() const {
-		return ip_standby_status_recv;
+	void parse();
+	void set_config_path(const std::string& json_path) {
+		config_doc = json_path;
+	}
+
+	std::shared_ptr<config> shared();
+
+	const std::string& get_ip_heartbeat_sender() const {
+		return ip_heartbeat_sender;
+	}
+
+	const std::string& get_ip_heartbeat_receiver() const {
+		return ip_heartbeat_receiver;
+	}
+
+	const std::string& get_ip_master_status_receiver() const {
+		return ip_master_status_receiver;
+	}
+
+	const std::string& get_ip_standby_status_sender() const {
+		return ip_standby_status_sender;
 	}
 
 	const std::string& get_pid_failover_path() const {

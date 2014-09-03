@@ -15,6 +15,7 @@
 #include "util.h"
 #include "net_util.h"
 #include "heartbeat.h"
+#include "signal_handler.h"
 #include "master_machine.h"
 #include "standby_machine.h"
 #include "machine_interaction.h"
@@ -85,6 +86,7 @@ int main(int argc, char const *argv[]) {
     }
 
     std::shared_ptr<heartbeat> hb = init_heartbeat();
+    std::cout << "heartbeat module initialized" << std::endl;
 
     int machine_ret = 0;
 
@@ -96,6 +98,7 @@ int main(int argc, char const *argv[]) {
 
         if(is_this_master(&mas_sta)) {
             // first check whether a master is alive
+        	std::cout << "check whether a master is alive" << std::endl;
             if(other_is_master()) {
             	async_handle_asterisk::stop();
                 yield_master(&mas_sta);
@@ -111,6 +114,7 @@ int main(int argc, char const *argv[]) {
             hb->attach_observer(std::dynamic_pointer_cast<observer>(mm));
             hb->attach_observer(std::dynamic_pointer_cast<observer>(config::instance().shared()));
 
+            // block here
             mm->join();
 
             machine_ret = mm->get_machine_retval();
@@ -128,6 +132,7 @@ int main(int argc, char const *argv[]) {
             hb->attach_observer(std::dynamic_pointer_cast<observer>(sm));
             hb->attach_observer(std::dynamic_pointer_cast<observer>(config::instance().shared()));
 
+            // block here
             sm->join();
             
             machine_ret = sm->get_machine_retval();

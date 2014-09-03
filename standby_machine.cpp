@@ -105,7 +105,7 @@ void standby_machine::status_receive() {
 		}
 
 		if (get_tcp_connection_ready_socket(sockfd,
-				config::instance().get_ip_standby_status_recv().c_str(),
+				config::instance().get_ip_standby_status_sender().c_str(),
 				config::instance().get_port_status_receiver(), MAX_CONN_COUNT)
 				< 0) {
 			perror("...");
@@ -156,6 +156,7 @@ void standby_machine::status_receive() {
 		}
 
 		pthread_cleanup_pop(1);
+		close(sockfd);
 	std::cout << "status receive thread end" << std::endl;
 	//*((int *)exit_val) = thread_exit_val;
 	retval = thread_exit_val;

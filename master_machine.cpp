@@ -89,7 +89,7 @@ int master_machine::master_status_send_loop(int wfd) {
         }
 
         ret = send(wfd, buffer, whatToSend.length(), MSG_NOSIGNAL);
-        DEBUG("errno = %d\n", errno);
+        //DEBUG("errno = %d\n", errno);
         if (ret != (int) whatToSend.length()) {
             break;
         }
@@ -110,7 +110,7 @@ void master_machine::master_status_send() {
 
     char receiver_addr[20];
     std::string receiver_addr_s =
-        config::instance().get_ip_master_status_send_to();
+        config::instance().get_ip_master_status_receiver();
     int receiver_port = config::instance().get_port_status_receiver();
     receiver_addr_s.copy(receiver_addr, receiver_addr_s.length());
     unsigned timeout = config::instance().get_connect_nonblock_timeout();
@@ -119,7 +119,7 @@ void master_machine::master_status_send() {
               << receiver_port << std::endl;
 
     char sender_addr[20];
-    std::string sender_addr_s = config::instance().get_ip_standby_status_recv();
+    std::string sender_addr_s = config::instance().get_ip_standby_status_sender();
     int sender_port = config::instance().get_port_status_sender();
     sender_addr_s.copy(sender_addr, sender_addr_s.length());
 
@@ -147,16 +147,19 @@ void master_machine::master_status_send() {
             if (errno == ECONNREFUSED) {
                 std::cout << "connection refused\n";
                 sleep(1);
+                close(sockfd);
                 continue;
             }
 
             perror("master status connect to other fail");
             printf("Requested address: %s:%d\n", receiver_addr, receiver_port);
+            close(sockfd);
             continue;
         }
 
         if (errno == ETIMEDOUT) {
             // time out
+        	close(sockfd);
             continue;
         }
 

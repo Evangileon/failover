@@ -5,9 +5,13 @@
  *      Author: evangileon
  */
 
+#include <stdlib.h>
 #include <signal.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "signal_handler.h"
+#include "config.h"
 
 struct sigaction old_act;
 
@@ -37,19 +41,19 @@ void setup_signal_handler() {
     memset(&term_act, 0, sizeof(term_act));
     term_act.sa_handler = &sig_term_handler;
 
-    if(sigaction(SIGTERM, nullptr, &old_act) == -1) {
+    if(sigaction(SIGTERM, NULL, &old_act) == -1) {
         perror("Can not get old handler of term signal");
         exit(-1);
     }
 
-    if(sigaction(SIGTERM, &term_act, nullptr) == -1) {
+    if(sigaction(SIGTERM, &term_act, NULL) == -1) {
         perror("Can not set new handler of term signal");
         exit(-1);
     }
 
     memset(&int_act, 0, sizeof(int_act));
     int_act.sa_handler = &sig_int_handler;
-    if(sigaction(SIGINT, &int_act, nullptr) == -1) {
+    if(sigaction(SIGINT, &int_act, NULL) == -1) {
         perror("Can not set int signal");
         exit(-1);
     }

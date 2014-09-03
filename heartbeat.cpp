@@ -69,7 +69,7 @@ int heartbeat::heartbeat_send_loop(int wfd) {
         }
 
         ret = send(wfd, buffer, 16, MSG_NOSIGNAL);
-        DEBUG("errno = %d\n", errno);
+        //DEBUG("errno = %d\n", errno);
         if (ret != 16) {
             break;
         }
@@ -92,7 +92,7 @@ void heartbeat::heartbeat_receive() {
     cli_len = sizeof(cli_addr);
 
     sockfd = get_tcp_connection_ready(
-                 config::instance().get_ip_heartbeat_recv().c_str(),
+                 config::instance().get_ip_heartbeat_sender().c_str(),
                  config::instance().get_port_heartbeat_receiver(), MAX_CONN_COUNT);
     if ((sockfd) < 0) {
         perror("ERROR opening socket");
@@ -135,6 +135,8 @@ void heartbeat::heartbeat_receive() {
         if (status < 0) {
         }
     }
+
+    close(sockfd);
 }
 
 void heartbeat::heartbeat_send() {
@@ -143,7 +145,7 @@ void heartbeat::heartbeat_send() {
     int sockfd;
 
     char receiver_addr[20];
-    std::string receiver_addr_s = config::instance().get_ip_heartbeat_send_to();
+    std::string receiver_addr_s = config::instance().get_ip_heartbeat_receiver();
     int receiver_port = config::instance().get_port_heartbeat_receiver();
     receiver_addr_s.copy(receiver_addr, receiver_addr_s.length());
     unsigned timeout = config::instance().get_connect_nonblock_timeout();
@@ -151,12 +153,12 @@ void heartbeat::heartbeat_send() {
     std::cout << "heartbeat receiver addr: " << receiver_addr << ":"
               << receiver_port << std::endl;
 
-    char sender_addr[20];
-    std::string sender_addr_s = config::instance().get_ip_heartbeat_recv();
+    //char sender_addr[20];
+    //std::string sender_addr_s = config::instance().get_ip_heartbeat_sender();
     int sender_port = config::instance().get_port_heartbeat_sender();
-    sender_addr_s.copy(sender_addr, sender_addr_s.length());
+    //sender_addr_s.copy(sender_addr, sender_addr_s.length());
 
-    std::cout << "heartbeat sender bind to addr: " << sender_addr << ":"
+    std::cout << "heartbeat sender bind to addr: " << config::instance().get_ip_heartbeat_sender() << ":"
               << sender_port << std::endl;
 
     while (1) {
