@@ -10,6 +10,11 @@
 #define STANDBY_ALIVE 5
 #define STANDBY_FAIL 6
 
+#define ASTERISK_START 7
+#define ASTERISK_RESTART 8
+#define ASTERISK_STOP 9   // Asterisk running on this machine stopped
+#define MACHINE_STOP 10   // The other machine stopped
+
 struct master_status_mtx {
 	int isMaster;
 	pthread_mutex_t mutex;

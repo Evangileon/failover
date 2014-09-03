@@ -11,7 +11,7 @@
 
 
 config::config() :
-		this_is_master(false), config_doc("./config.json"), ip_heartbeat_receiver(
+		this_is_master(false), config_doc("/etc/failover/config.json"), ip_heartbeat_receiver(
 				"0.0.0.0"), ip_heartbeat_sender("0.0.0.0") {
 	heartbeat_direct_link = false;
 	status_direct_link = false;

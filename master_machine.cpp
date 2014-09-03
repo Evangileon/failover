@@ -47,30 +47,31 @@ int master_machine::master_status_send_loop(int wfd) {
     while (1) {
 
         if (terminationFlag) {
-        	std::cout << "Termination flag = " << terminationFlag << std::endl;
+            std::cout << "master termination flag = " << terminationFlag
+                      << std::endl;
             if (STANDBY_FAIL == terminationFlag) {
                 std::cout << "standby is dead" << std::endl;
             }
         }
 
         sleep(1);
-        if (!needStatusSend) {
-        	std::cout << "No need to send status" << std::endl;
-            break;
-        }
 
         int check = checkStatus();
         std::string whatToSend = checkResultStr(check);
 
-        if (check == ASTERISK_STOP) { // "down"
+
+
+        if (check == CHECK_ASTERISK_DEAD) { // "down"
             async_handle_asterisk::restart();
             restartCount++;
             if (restartCount == MAX_RESTART_TIMES) {
                 whatToSend = "down";
                 restartCount = 0;
-                std::cout << "Going to shut down asterisk on this machine" << std::endl;
+                std::cout << "Going to shut down asterisk on this machine"
+                          << std::endl;
                 async_handle_asterisk::stop();
-                end_status_send_loop = true;
+                loop_ret_val = ASTERISK_STOP;
+                goto send_loop_done;
             } else {
                 whatToSend = "master try to restart asterisk";
             }
@@ -82,24 +83,23 @@ int master_machine::master_status_send_loop(int wfd) {
 
         ret = select_write_with_timeout(wfd, &wfds, 5);
         if (ret <= 0) {
-            break;
+        	loop_ret_val = STANDBY_FAIL;
+            goto send_loop_done;
         }
         if (!FD_ISSET(wfd, &wfds)) {
-            break;
+        	loop_ret_val = STANDBY_FAIL;
+            goto send_loop_done;
         }
 
         ret = send(wfd, buffer, whatToSend.length(), MSG_NOSIGNAL);
         //DEBUG("errno = %d\n", errno);
         if (ret != (int) whatToSend.length()) {
-            break;
+        	loop_ret_val = STANDBY_FAIL;
+            goto send_loop_done;
         }
         std::cout << "status sent\n";
-        if (end_status_send_loop) {
-            loop_ret_val = ASTERISK_STOP;
-            break;
-        }
     }
-
+send_loop_done:
     return loop_ret_val;
 }
 
@@ -119,7 +119,8 @@ void master_machine::master_status_send() {
               << receiver_port << std::endl;
 
     char sender_addr[20];
-    std::string sender_addr_s = config::instance().get_ip_standby_status_sender();
+    std::string sender_addr_s =
+        config::instance().get_ip_standby_status_sender();
     int sender_port = config::instance().get_port_status_sender();
     sender_addr_s.copy(sender_addr, sender_addr_s.length());
 
@@ -135,11 +136,21 @@ void master_machine::master_status_send() {
         // ensure the fd will be closed while calling pthread_cancel
         pthread_cleanup_push(&cleanup_handler, (void *)((long)sockfd));
 
+        int net_optval = 1;
+        if (setsockopt((sockfd), SOL_SOCKET, SO_REUSEADDR, &net_optval,
+                       sizeof net_optval) < 0) {
+            perror("errno on setsockopt");
+            CUR_ERR();
+        }
+
         if (config::instance().is_status_direct_link()) {
             enable_direct_link(sockfd);
         }
 
-        sender_bind(NULL, sender_port, sockfd);
+        if (sender_bind(NULL, sender_port, sockfd) < 0) {
+            CUR_INFO();
+        }
+        std::cout << "master status port bind to " << sender_port << std::endl;
 
         int ret = connect_nonblock(receiver_addr, receiver_port, sockfd,
                                    timeout);
@@ -152,19 +163,28 @@ void master_machine::master_status_send() {
             }
 
             perror("master status connect to other fail");
-            printf("Requested address: %s:%d\n", receiver_addr, receiver_port);
+            DEBUG("errno = %d\n", errno);
+            printf("Requested address: %s:%d\n", receiver_addr,
+                   receiver_port);
             close(sockfd);
             continue;
         }
 
         if (errno == ETIMEDOUT) {
             // time out
-        	close(sockfd);
+            close(sockfd);
             continue;
         }
 
         std::cout << "status send loop\n";
         int status = master_status_send_loop(sockfd);
+
+        if(status == STANDBY_FAIL) {
+        	std::cout << "master detect other is dead, try to reconnect" << std::endl;
+        	close(sockfd);
+        	continue;
+        }
+
         if (status == ASTERISK_STOP) {
             std::cout << "cease status sending\n";
             thread_exit_val = MASTER_ASTERISK_STOP;
@@ -191,8 +211,8 @@ void master_machine::update(int flag) {
         terminationFlag = STANDBY_FAIL;
         break;
     case THE_OTHER_IS_ALIVE:
-    	terminationFlag = STANDBY_ALIVE;
-    	break;
+        terminationFlag = STANDBY_ALIVE;
+        break;
     default:
         terminationFlag = 0;
     }

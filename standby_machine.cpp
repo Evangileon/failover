@@ -28,34 +28,39 @@ standby_machine::~standby_machine() {
 
 int standby_machine::status_receive_loop(int rfd) {
 	fd_set rfds;
-	int ret = -1;
+	int ret = 0;
 	char buffer[SEND_BUFFER_SIZE];
 
 	while (1) {
 
 		if (terminationFlag) {
+			std::cout << "standby termination flag = " << terminationFlag
+					<< std::endl;
 			if (MASTER_FAIL == terminationFlag) {
 				ret = MASTER_FAIL;
-				break;
+				goto receive_loop_done;
 			}
 		}
 
 		ret = select_with_timeout(rfd, &rfds, 2);
 		if (ret <= 0) {
-			break;
+			ret = MASTER_FAIL;
+			goto receive_loop_done;
 		}
 		if (!FD_ISSET(rfd, &rfds)) {
-			break;
+			ret = MASTER_FAIL;
+			goto receive_loop_done;
 		}
 
 		ret = recv(rfd, buffer, SEND_BUFFER_SIZE, 0);
 		if (ret <= 0) {
-			break;
+			ret = MASTER_FAIL;
+			goto receive_loop_done;
 		}
 		if (ret > SEND_BUFFER_SIZE) {
 			std::cout << "I am hacked" << std::endl;
 			ret = -1;
-			break;
+			goto receive_loop_done;
 		}
 
 		buffer[ret] = '\0';
@@ -63,13 +68,14 @@ int standby_machine::status_receive_loop(int rfd) {
 		std::cout << "master is " << buffer << std::endl;
 		if (strcmp(buffer, "down") == 0) {
 			ret = MASTER_ASTERISK_STOP;
-			break;
+			terminationFlag = MASTER_ASTERISK_STOP;
+			goto receive_loop_done;
 		}
 		sleep(1);
 	}
 
+receive_loop_done:
 	std::cout << "End status receive loop" << std::endl;
-
 	return ret;
 }
 
@@ -144,19 +150,20 @@ void standby_machine::status_receive() {
 
 					needStatusSend = 1;
 					int masterStatus = status_receive_loop(cfd);
-					if (masterStatus == MASTER_ASTERISK_STOP || masterStatus == MASTER_FAIL) {
+					if (masterStatus == MASTER_ASTERISK_STOP
+							|| masterStatus == MASTER_FAIL) {
 						close(cfd);
 						thread_exit_val = MASTER_ASTERISK_STOP;
 						break;
 					}
 
-					pthread_cleanup_pop(1);
+				pthread_cleanup_pop(1);
 				close(cfd);
 			}
 		}
 
 		pthread_cleanup_pop(1);
-		close(sockfd);
+	close(sockfd);
 	std::cout << "status receive thread end" << std::endl;
 	//*((int *)exit_val) = thread_exit_val;
 	retval = thread_exit_val;

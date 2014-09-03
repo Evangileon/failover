@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "async_handle_asterisk.h"
+#include "machine_interaction.h"
 #include "util.h"
 
 void async_handle_asterisk::handle_loop() {

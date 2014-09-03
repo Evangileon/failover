@@ -124,21 +124,18 @@ int connect_nonblock_raw(struct sockaddr_in *sa, int sock, unsigned timeout) {
 	FD_SET(sock, &wset);
 
 	if ((flags = fcntl(sock, F_GETFL, 0)) < 0) {
-		CUR_INFO()
-		;
+		CUR_INFO();
 		return -1;
 	}
 
 	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) {
-		CUR_INFO()
-		;
+		CUR_INFO();
 		return -1;
 	}
 
 	if ((ret = connect(sock, (struct sockaddr *) sa, 16)) < 0) {
 		if (errno != EINPROGRESS) {
-			CUR_INFO()
-			;
+			CUR_INFO();
 			return -1;
 		}
 	}
@@ -148,34 +145,29 @@ int connect_nonblock_raw(struct sockaddr_in *sa, int sock, unsigned timeout) {
 
 	if ((ret = select(sock + 1, &rset, &wset, NULL, (timeout) ? &ts : NULL))
 			< 0) {
-		CUR_INFO()
-		;
+		CUR_INFO();
 		return -1;
 	}
 	if (ret == 0) {   //we had a timeout
 		errno = ETIMEDOUT;
-		CUR_INFO()
-		;
+		CUR_INFO();
 		return -1;
 	}
 
 	if (FD_ISSET(sock, &rset) || FD_ISSET(sock, &wset)) {
 		if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-			CUR_INFO()
-			;
+			CUR_INFO();
 			return -1;
 		}
 	} else {
-		CUR_INFO()
-		;
+		CUR_INFO();
 		return -1;
 	}
 
 	if (error) {  //check if we had a socket error
 		errno = error;
 		perror("error: ");
-		CUR_INFO()
-		;
+		CUR_INFO();
 		return -1;
 	}
 
@@ -208,21 +200,19 @@ int sender_bind(const char *addr, int port, int sockfd) {
 	} else {
 		sender_addr.sin_addr.s_addr = inet_addr(addr);
 	}
-	sender_addr.sin_port = htons(port);
+	sender_addr.sin_port = htons((in_port_t)port);
 
 	int net_optval = 1;
 	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &net_optval,
 			sizeof net_optval) < 0) {
 		perror("errno on setsockopt");
-		CUR_ERR()
-		;
+		CUR_ERR();
 	}
 
 	if (bind(sockfd, (sockaddr *) &sender_addr, sizeof(sender_addr)) < 0) {
 		perror("sender bind:");
 		printf("Requested address: %s:%d\n", addr, port);
-		CUR_ERR()
-		;
+		CUR_ERR();
 	}
 
 	return 0;

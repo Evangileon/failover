@@ -2,10 +2,6 @@
 #define __ASYNC_HANDLE_ASTERISK_H_JUN__
 
 
-#define ASTERISK_START 0
-#define ASTERISK_RESTART 1
-#define ASTERISK_STOP 2
-
 #include <thread>
 #include <mutex>
 #include <queue>
