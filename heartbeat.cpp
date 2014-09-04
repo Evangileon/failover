@@ -119,6 +119,7 @@ void heartbeat::heartbeat_receive() {
 			status = -1;
 			needSend = 0;
 			std::cout << "The other is dead" << std::endl;
+			close(sockfd);
 			sleep(1);
 			notify_observers(THE_OTHER_IS_DEAD);
 		} else {
@@ -164,6 +165,7 @@ void heartbeat::heartbeat_send() {
 			<< sender_port << std::endl;
 
 	while (1) {
+
 		sockfd = socket(AF_INET, SOCK_STREAM, 0);
 		if (sockfd < 0) {
 			ERROR("%d\n", __LINE__);
@@ -189,20 +191,25 @@ void heartbeat::heartbeat_send() {
 
 			perror("heartbeat connect after nonblock");
 			printf("Requested address: %s:%d\n", receiver_addr, receiver_port);
+			close(sockfd);
+			sleep(1);
+			continue;
 			CUR_INFO();
 		}
 
 		if (errno == ETIMEDOUT) {
 			// time out
+			std::cout << "heartbeat send timeout" << std::endl;
 			close(sockfd);
 			continue;
 		}
 
 		std::cout << "go to send loop" << std::endl;
 		heartbeat_send_loop(sockfd);
-		std::cout << "cease sending" << std::endl;
 		close(sockfd);
+		std::cout << "cease sending" << std::endl;
 	}
+	close(sockfd);
 }
 
 void heartbeat::notify_observers(int flag) {

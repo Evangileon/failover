@@ -172,8 +172,7 @@ int connect_nonblock_raw(struct sockaddr_in *sa, int sock, unsigned timeout) {
 	}
 
 	nonblock_done: if (fcntl(sock, F_SETFL, flags) < 0) {
-		CUR_INFO()
-		;
+		CUR_INFO();
 		return -1;
 	}
 

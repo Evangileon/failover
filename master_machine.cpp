@@ -167,11 +167,13 @@ void master_machine::master_status_send() {
             printf("Requested address: %s:%d\n", receiver_addr,
                    receiver_port);
             close(sockfd);
+            sleep(1);
             continue;
         }
 
         if (errno == ETIMEDOUT) {
             // time out
+        	std::cout << "status send timeout" << std::endl;
             close(sockfd);
             continue;
         }
