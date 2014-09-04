@@ -30,5 +30,14 @@
         "port_status_receiver" : 44444,
         
         // time value
-        "connect_nonblock_timeout" : 5
+        "connect_nonblock_timeout" : 5,
+        "max_restart_times" : 3,
+	"status_send_loop_interval" : 1,
+	"status_receive_loop_timeout" : 2,
+	"status_receive_timeout" : 5,
+
+	"status_send_loop_timeout" : 5,
+	"heartbeat_send_loop_timeout" : 5,
+	"heartbeat_receive_loop_timeout" : 2,
+	"heartbeat_send_interval" : 1
 }
