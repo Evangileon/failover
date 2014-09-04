@@ -10,6 +10,12 @@
 #include "config.h"
 
 
+
+#define readInt(name, dfalt) name = root.get(#name, (dfalt)).asInt()
+#define readUInt(name, dfalt) name = root.get(#name, (dfalt)).asUInt()
+#define readString(name, dfalt) name = root.get(#name, (dfalt)).asString()
+#define readBool(name, dfalt) name = root.get(#name, (dfalt)).asBool()
+
 config::config() :
 		this_is_master(false), config_doc("/etc/failover/config.json"), ip_heartbeat_receiver(
 				"0.0.0.0"), ip_heartbeat_sender("0.0.0.0") {
@@ -43,36 +49,56 @@ void config::parse() {
 	}
 	this->root = root;
 
-	this_is_master = root.get("this_is_master", false).asBool();
-	heartbeat_direct_link = root.get("heartbeat_direct_link", false).asBool();
-	status_direct_link = root.get("status_direct_link", false).asBool();
+	readBool(this_is_master, false);
+	readBool(heartbeat_direct_link, false);
+	readBool(status_direct_link, false);
 
 	// IP address
 	// heartbeat related
-	ip_heartbeat_receiver = root.get("ip_heartbeat_receiver",
-			"192.168.100.101").asString();
-	ip_heartbeat_sender = root.get("ip_heartbeat_sender",
-			"192.168.100.102").asString();
-	
+	readString(ip_heartbeat_receiver, "192.168.100.101");
+	readString(ip_heartbeat_sender, "192.168.100.102");
+
 	// status related
-	ip_master_status_receiver =
-			root.get("ip_master_status_receiver", "10.176.15.200").asString();
-	ip_standby_status_sender = root.get("ip_standby_status_sender",
-			"10.176.15.201").asString();
+	readString(ip_master_status_receiver, "10.176.15.200");
+	readString(ip_standby_status_sender, "10.176.15.201");
 
 	// consistency related
-	socket_failover_path = root.get("socket_failover_path",
-			"/var/run/failover/failover.ctl").asString();
-	pid_failover_path = root.get("pid_failover_path",
-			"/var/run/failover/failover.pid").asString();
+	readString(socket_failover_path, "/var/run/failover/failover.ctl");
+	readString(pid_failover_path, "/var/run/failover/failover.pid");
 
 	// port related
-	port_status_sender = root.get("port_status_sender", 44443).asInt();
-	port_status_receiver = root.get("port_status_receiver", 44444).asInt();
-	port_heartbeat_sender = root.get("port_heartbeat_sender", 44441).asInt();
-	port_heartbeat_receiver = root.get("port_heartbeat_receiver", 44442).asInt();
+	readInt(port_status_sender, 44443);
+	readInt(port_status_receiver, 44444);
+	readInt(port_heartbeat_sender, 44441);
+	readInt(port_heartbeat_receiver, 44442);
 
-	connect_nonblock_timeout = root.get("connect_nonblock_timeout", 5).asUInt();
+	readUInt(connect_nonblock_timeout, 5);
+
+	Json::Value take_over = root["take_over_script"];
+	if (take_over.isArray()) {
+		for (Json::ValueIterator itor = take_over.begin();
+				itor != take_over.end(); ++itor) {
+			take_over_script.push_back((*itor).asString());
+		}
+	}
+
+	Json::Value fail_over = root["fail_over_script"];
+	if (fail_over.isArray()) {
+		for (Json::ValueIterator itor = fail_over.begin();
+				itor != fail_over.end(); ++itor) {
+			fail_over_script.push_back((*itor).asString());
+		}
+	}
+
+	readUInt(max_restart_times, 3);
+	readUInt(status_send_loop_interval, 1);
+	readUInt(status_receive_loop_timeout, 2);
+	readUInt(status_receive_timeout, 5);
+
+	readUInt(status_send_loop_timeout, 5);
+	readUInt(heartbeat_send_loop_timeout, 5);
+	readUInt(heartbeat_receive_loop_timeout, 2);
+	readUInt(heartbeat_send_interval, 1);
 }
 
 void config::update(int flag) {

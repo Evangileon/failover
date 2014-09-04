@@ -10,8 +10,8 @@
 
 
 
-extern int select_with_timeout(int sockfd, fd_set* rfds, int time_sec);
-extern int select_write_with_timeout(int, fd_set*, int);
+extern int select_with_timeout(int sockfd, fd_set* rfds, unsigned int time_sec);
+extern int select_write_with_timeout(int, fd_set*, unsigned int);
 extern int get_tcp_connection_ready(const char* addr, int port, int count);
 extern int get_any_connection_ready(int, int, int, int, int);
 extern int get_any_tcp_connection_ready(int, int);

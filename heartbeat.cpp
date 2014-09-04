@@ -30,9 +30,10 @@ int heartbeat::heartbeat_receive_loop(int rfd) {
     fd_set rfds;
     int ret = -1;
     char buffer[16];
+    unsigned timeout = config::instance().get_heartbeat_receive_loop_timeout();
 
     while (1) {
-        ret = select_with_timeout(rfd, &rfds, 2);
+        ret = select_with_timeout(rfd, &rfds, timeout);
         if (ret <= 0) {
             break;
         }
@@ -56,11 +57,13 @@ int heartbeat::heartbeat_send_loop(int wfd) {
     fd_set wfds;
     int ret = -1;
     char buffer[16];
+    unsigned interval = config::instance().get_heartbeat_send_interval();
+    unsigned timeout = config::instance().get_heartbeat_send_loop_timeout();
 
     while (1) {
-        sleep(1);
+        sleep(interval);
 
-        ret = select_write_with_timeout(wfd, &wfds, 5);
+        ret = select_write_with_timeout(wfd, &wfds, timeout);
         if (ret <= 0) {
             break;
         }
@@ -85,6 +88,7 @@ void heartbeat::heartbeat_receive() {
     int sockfd;
     int ret;
     int status = 0;
+    unsigned timeout = config::instance().get_heartbeat_receive_timeout();
     fd_set rfds;
 
     struct sockaddr_in cli_addr;
@@ -109,7 +113,7 @@ void heartbeat::heartbeat_receive() {
 			enable_direct_link(sockfd);
 		}
 
-        ret = select_with_timeout(sockfd, &rfds, 5);
+        ret = select_with_timeout(sockfd, &rfds, timeout);
         if (ret < 0) {
             perror("after select");
             ERROR("%s, %d\n", __FILE__, __LINE__);
@@ -171,7 +175,9 @@ void heartbeat::heartbeat_send() {
         	enable_direct_link(sockfd);
         }
 
-        sender_bind(NULL, sender_port, sockfd);
+        if(sender_bind(NULL, sender_port, sockfd) < 0) {
+        	std::cout << "Can not bind" << std::endl;
+        }
 
         int ret = connect_nonblock(receiver_addr, receiver_port, sockfd,
                                    timeout);

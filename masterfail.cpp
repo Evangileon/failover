@@ -64,6 +64,40 @@ int create_socket() {
 	return sfd;
 }
 
+/**
+ *
+ * @return -1 if any of fail over script fail
+ */
+int yield_master_jobs() {
+	int ret = 0;
+	async_handle_asterisk::stop();
+	std::vector<std::string> fail_over =
+			config::instance().get_fail_over_script();
+	for (std::vector<std::string>::iterator itor = fail_over.begin();
+			itor != fail_over.end(); ++itor) {
+		int err = std::system((*itor).c_str());
+		ret = (err < 0) ? -1 : ret;
+	}
+	return ret;
+}
+
+/**
+ *
+ * @return -1 if any of take over script fail
+ */
+int takeover_master_jobs() {
+	int ret = 0;
+	async_handle_asterisk::restart();
+	std::vector<std::string> take_over =
+			config::instance().get_take_over_script();
+	for (std::vector<std::string>::iterator itor = take_over.begin();
+			itor != take_over.end(); ++itor) {
+		int err = std::system((*itor).c_str());
+		ret = (err < 0) ? -1 : ret;
+	}
+	return ret;
+}
+
 int main(int argc, char const *argv[]) {
 	int test = 0;
 	if (1 < argc) {
@@ -75,15 +109,16 @@ int main(int argc, char const *argv[]) {
 	setup_signal_handler();
 	config::instance().parse();
 
-	if (test) {
-		//std::cout << "This is a test\n";
-	}
-
 	int pid_fd = create_pid_file(argv[0],
 			config::instance().get_pid_failover_path().c_str(), 0);
-	if(pid_fd == PROGRAM_ALREADY_RUNNING) {
+	if (pid_fd == PROGRAM_ALREADY_RUNNING) {
 		std::cout << "Failover already running" << std::endl;
-		exit(-1);
+		exit(0);
+	}
+
+	if (test) {
+		std::cout << "This is a test\n";
+		exit(0);
 	}
 
 	struct master_status_mtx mas_sta;
@@ -109,8 +144,8 @@ int main(int argc, char const *argv[]) {
 			// first check whether a master is alive
 			std::cout << "check whether a master is alive" << std::endl;
 			if (other_is_master()) {
-				async_handle_asterisk::stop();
 				yield_master(&mas_sta);
+				yield_master_jobs();
 				continue;
 			}
 
@@ -132,7 +167,7 @@ int main(int argc, char const *argv[]) {
 			if (machine_ret == MASTER_ASTERISK_STOP) {
 				std::cout << "yield master" << std::endl;
 				yield_master(&mas_sta);
-				async_handle_asterisk::stop();
+				yield_master_jobs();
 			}
 
 		} else {
@@ -152,7 +187,7 @@ int main(int argc, char const *argv[]) {
 			if (machine_ret == MASTER_ASTERISK_STOP) {
 				std::cout << "seize master" << std::endl;
 				seize_master(&mas_sta);
-				async_handle_asterisk::restart();
+				takeover_master_jobs();
 			}
 		}
 
@@ -160,16 +195,11 @@ int main(int argc, char const *argv[]) {
 		hb->reset_observer();
 	}
 
-#if 0
-
-#endif
-
 	std::cout << "In the end\n";
 	//heartbeatSendThread.join();
 	//heartbeatReceiveThread.join();
 	std::cout << "After join\n";
 	unlink(config::instance().get_socket_failover_path().c_str());
-
 
 	std::remove(config::instance().get_pid_failover_path().c_str());
 

@@ -3,7 +3,11 @@
         "heartbeat_direct_link" : true,
         "status_direct_link" : true,
         
-        "switch_over_script" : [
+        "take_over_script" : [
+                
+        ],
+        
+        "fail_over_script" : [
                 
         ],
 

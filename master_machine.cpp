@@ -40,9 +40,11 @@ int master_machine::master_status_send_loop(int wfd) {
     int ret = -1;
     char buffer[SEND_BUFFER_SIZE];
 
-    int restartCount = 0;
-    bool end_status_send_loop = false;
+    unsigned int restartCount = 0;
+    //bool end_status_send_loop = false;
     int loop_ret_val = 0;
+    unsigned timeout = config::instance().get_status_send_loop_timeout();
+    unsigned interval = config::instance().get_status_send_loop_interval();
 
     while (1) {
 
@@ -54,22 +56,20 @@ int master_machine::master_status_send_loop(int wfd) {
             }
         }
 
-        sleep(1);
+        sleep(interval);
 
         int check = checkStatus();
         std::string whatToSend = checkResultStr(check);
 
-
-
         if (check == CHECK_ASTERISK_DEAD) { // "down"
             async_handle_asterisk::restart();
             restartCount++;
-            if (restartCount == MAX_RESTART_TIMES) {
+            if (restartCount == config::instance().get_max_restart_time()) {
                 whatToSend = "down";
                 restartCount = 0;
                 std::cout << "Going to shut down asterisk on this machine"
                           << std::endl;
-                async_handle_asterisk::stop();
+                //async_handle_asterisk::stop();
                 loop_ret_val = ASTERISK_STOP;
                 goto send_loop_done;
             } else {
@@ -81,7 +81,7 @@ int master_machine::master_status_send_loop(int wfd) {
         buffer[whatToSend.length()] = '\0';
         std::cout << "message: " << buffer << std::endl;
 
-        ret = select_write_with_timeout(wfd, &wfds, 5);
+        ret = select_write_with_timeout(wfd, &wfds, timeout);
         if (ret <= 0) {
         	loop_ret_val = STANDBY_FAIL;
             goto send_loop_done;

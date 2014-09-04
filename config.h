@@ -5,17 +5,8 @@
 #include <memory>
 #include <map>
 
-#define RECEIVE_ONCE_TIMEOUT 5
-#define RECEIVE_TIMEOUT 5
-
-#define SLEEP_DUR 5
-#define RECV_BUF_SIZE 256
-#define MAX_ERR_COUNT 100
-#define MAX_DEFUNCT_COUNT 100
 #define MAX_CONN_COUNT 50
-#define TIMEOUT_DUR 15
 #define SEND_BUFFER_SIZE 64
-#define MAX_RESTART_TIMES 3
 
 #include "json/json.h"
 
@@ -55,6 +46,22 @@ private:
 	unsigned connect_nonblock_timeout;
 
 	std::map<uint, std::string> ip_map;  // id 0 is the master
+
+	std::vector<std::string> take_over_script;
+	std::vector<std::string> fail_over_script;
+
+	unsigned max_restart_times;
+	unsigned status_send_loop_interval;
+	unsigned status_receive_timeout;
+	unsigned status_receive_loop_timeout;
+
+	//unsigned status_send_timeout;
+	unsigned status_send_loop_timeout;
+	//unsigned heartbeat_send_timeout;
+	unsigned heartbeat_send_loop_timeout;
+	unsigned heartbeat_receive_timeout;
+	unsigned heartbeat_receive_loop_timeout;
+	unsigned heartbeat_send_interval;
 
 	config();
 public:
@@ -134,6 +141,50 @@ public:
 	}
 
 	void dump_config_file(std::string) const;
+
+	const std::vector<std::string>& get_fail_over_script() const {
+		return fail_over_script;
+	}
+
+	const std::vector<std::string>& get_take_over_script() const {
+		return take_over_script;
+	}
+
+	unsigned get_max_restart_time() const {
+		return max_restart_times;
+	}
+
+	unsigned get_status_send_loop_interval() const {
+		return status_send_loop_interval;
+	}
+
+	unsigned get_status_receive_timeout() const {
+		return status_receive_timeout;
+	}
+
+	unsigned get_status_receive_loop_timeout() const {
+		return status_receive_loop_timeout;
+	}
+
+	unsigned get_heartbeat_receive_loop_timeout() const {
+		return heartbeat_receive_loop_timeout;
+	}
+
+	unsigned get_heartbeat_receive_timeout() const {
+		return heartbeat_receive_timeout;
+	}
+
+	unsigned get_heartbeat_send_interval() const {
+		return heartbeat_send_interval;
+	}
+
+	unsigned get_heartbeat_send_loop_timeout() const {
+		return heartbeat_send_loop_timeout;
+	}
+
+	unsigned get_status_send_loop_timeout() const {
+		return status_send_loop_timeout;
+	}
 
 private:
 	virtual void update(int flag);

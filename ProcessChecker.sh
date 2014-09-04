@@ -38,6 +38,10 @@ elif [ $count -lt 0 ]
 then   
    echo one or more duplicate processes found
    exit 1
+elif [ $count -eq $initialCount ]
+then
+	echo none of process required is running
+	exit 3
 elif [ $count -gt 0  ]
 then
    echo some of the required processes are not running

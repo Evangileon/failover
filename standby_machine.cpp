@@ -30,6 +30,7 @@ int standby_machine::status_receive_loop(int rfd) {
 	fd_set rfds;
 	int ret = 0;
 	char buffer[SEND_BUFFER_SIZE];
+	unsigned int timeout = config::instance().get_status_receive_loop_timeout();
 
 	while (1) {
 
@@ -42,7 +43,12 @@ int standby_machine::status_receive_loop(int rfd) {
 			}
 		}
 
-		ret = select_with_timeout(rfd, &rfds, 2);
+		int check = checkStatus();
+		if(check != CHECK_ASTERISK_SHUT_DOWN) {
+			async_handle_asterisk::stop();
+		}
+
+		ret = select_with_timeout(rfd, &rfds, timeout);
 		if (ret <= 0) {
 			ret = MASTER_FAIL;
 			goto receive_loop_done;
@@ -71,7 +77,7 @@ int standby_machine::status_receive_loop(int rfd) {
 			terminationFlag = MASTER_ASTERISK_STOP;
 			goto receive_loop_done;
 		}
-		sleep(1);
+		//sleep(1);
 	}
 
 receive_loop_done:
@@ -84,6 +90,7 @@ void standby_machine::status_receive() {
 	int ret;
 	//int status = 0;
 	int thread_exit_val;
+	unsigned int timeout = config::instance().get_status_receive_timeout();
 	fd_set rfds;
 
 	struct sockaddr_in cli_addr;
@@ -124,7 +131,7 @@ void standby_machine::status_receive() {
 				ERROR("%s, %d\n", __FILE__, __LINE__);
 			}
 
-			ret = select_with_timeout(sockfd, &rfds, 5);
+			ret = select_with_timeout(sockfd, &rfds, timeout);
 			if (ret < 0) {
 				perror("after select");
 				ERROR("%s, %d\n", __FILE__, __LINE__);

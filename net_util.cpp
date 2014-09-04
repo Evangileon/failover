@@ -10,7 +10,7 @@
 #include "net_util.h"
 #include "util.h"
 
-int select_write_with_timeout(int sockfdq, fd_set *wfds, int time_sec) {
+int select_write_with_timeout(int sockfdq, fd_set *wfds, unsigned int time_sec) {
 
 	FD_ZERO(wfds);
 	FD_SET(sockfdq, wfds);
@@ -24,7 +24,7 @@ int select_write_with_timeout(int sockfdq, fd_set *wfds, int time_sec) {
 	return iResult;
 }
 
-int select_with_timeout(int sockfdq, fd_set *rfds, int time_sec) {
+int select_with_timeout(int sockfdq, fd_set *rfds, unsigned int time_sec) {
 	FD_ZERO(rfds);
 	FD_SET(sockfdq, rfds);
 
