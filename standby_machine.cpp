@@ -18,6 +18,7 @@
 #include "status_check.h"
 #include "thread_util.h"
 #include "async_handle_asterisk.h"
+#include "checker.h"
 
 standby_machine::standby_machine() {
 	terminationFlag = 0;
@@ -43,7 +44,7 @@ int standby_machine::status_receive_loop(int rfd) {
 			}
 		}
 
-		int check = checkStatus();
+		int check = checker::get_status();
 		if(check != CHECK_ASTERISK_SHUT_DOWN) {
 			async_handle_asterisk::stop();
 		}
@@ -130,6 +131,7 @@ void standby_machine::status_receive() {
 			if (sockfd < 0) {
 				ERROR("%s, %d\n", __FILE__, __LINE__);
 			}
+			async_handle_asterisk::stop();
 
 			ret = select_with_timeout(sockfd, &rfds, timeout);
 			if (ret < 0) {

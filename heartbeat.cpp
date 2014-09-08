@@ -15,6 +15,7 @@
 #include "async_handle_asterisk.h"
 #include "master_machine.h"
 #include "heartbeat.h"
+#include "thread_util.h"
 
 heartbeat::heartbeat() {
 	needSend = 1;
@@ -55,7 +56,7 @@ int heartbeat::heartbeat_receive_loop(int rfd) {
 
 int heartbeat::heartbeat_send_loop(int wfd) {
 	fd_set wfds;
-	int ret = -1;
+	int ret = 0;
 	char buffer[16];
 	unsigned interval = config::instance().get_heartbeat_send_interval();
 	unsigned timeout = config::instance().get_heartbeat_send_loop_timeout();
@@ -65,15 +66,18 @@ int heartbeat::heartbeat_send_loop(int wfd) {
 
 		ret = select_write_with_timeout(wfd, &wfds, timeout);
 		if (ret <= 0) {
+			ret = -1;
 			break;
 		}
 		if (!FD_ISSET(wfd, &wfds)) {
+			ret = -1;
 			break;
 		}
 
 		ret = send(wfd, buffer, 16, MSG_NOSIGNAL);
 		//DEBUG("errno = %d\n", errno);
 		if (ret != 16) {
+			ret = -1;
 			break;
 		}
 		std::cout << "heartbeat send succeed" << std::endl;
@@ -95,19 +99,21 @@ void heartbeat::heartbeat_receive() {
 	socklen_t cli_len;
 	cli_len = sizeof(cli_addr);
 
-	while (1) {
-		sockfd = get_tcp_connection_ready(
-				config::instance().get_ip_heartbeat_sender().c_str(),
-				config::instance().get_port_heartbeat_receiver(),
-				MAX_CONN_COUNT);
-		if ((sockfd) < 0) {
-			perror("ERROR opening socket");
-			ERROR("%d\n", __LINE__);
-		}
+	sockfd = get_tcp_connection_ready(
+			config::instance().get_ip_heartbeat_sender().c_str(),
+			config::instance().get_port_heartbeat_receiver(),
+			MAX_CONN_COUNT);
+	if ((sockfd) < 0) {
+		perror("ERROR opening socket");
+		ERROR("%d\n", __LINE__);
+	}
+	pthread_cleanup_push(&cleanup_handler, (void *)((long)sockfd));
 
-		if (config::instance().is_heartbeat_direct_link()) {
-			enable_direct_link(sockfd);
-		}
+	if (config::instance().is_heartbeat_direct_link()) {
+		enable_direct_link(sockfd);
+	}
+
+	while (1) {
 
 		ret = select_with_timeout(sockfd, &rfds, timeout);
 		if (ret < 0) {
@@ -119,7 +125,6 @@ void heartbeat::heartbeat_receive() {
 			status = -1;
 			needSend = 0;
 			std::cout << "The other is dead" << std::endl;
-			close(sockfd);
 			sleep(1);
 			notify_observers(THE_OTHER_IS_DEAD);
 		} else {
@@ -134,8 +139,8 @@ void heartbeat::heartbeat_receive() {
 			heartbeat_receive_loop(cfd);
 			close(cfd);
 		}
-		close(sockfd);
 	}
+	pthread_cleanup_pop(1);
 
 	close(sockfd);
 }
@@ -164,51 +169,56 @@ void heartbeat::heartbeat_send() {
 			<< config::instance().get_ip_heartbeat_sender() << ":"
 			<< sender_port << std::endl;
 
+	pthread_cleanup_push(&cleanup_handler, (void *)((long)sockfd));
+heartbeat_send_begin:
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
+		ERROR("%d\n", __LINE__);
+	}
+
+	if (config::instance().is_heartbeat_direct_link()) {
+		enable_direct_link(sockfd);
+	}
+
+	if (sender_bind(NULL, sender_port, sockfd) < 0) {
+		std::cout << "Can not bind" << std::endl;
+	}
+
 	while (1) {
-
-		sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if (sockfd < 0) {
-			ERROR("%d\n", __LINE__);
-		}
-
-		if (config::instance().is_heartbeat_direct_link()) {
-			enable_direct_link(sockfd);
-		}
-
-		if (sender_bind(NULL, sender_port, sockfd) < 0) {
-			std::cout << "Can not bind" << std::endl;
-		}
 
 		int ret = connect_nonblock(receiver_addr, receiver_port, sockfd,
 				timeout);
 		if (ret < 0) {
 			if (errno == ECONNREFUSED) {
 				std::cout << "connection refused" << std::endl;
-				close(sockfd);
 				sleep(1);
 				continue;
 			}
 
 			perror("heartbeat connect after nonblock");
 			printf("Requested address: %s:%d\n", receiver_addr, receiver_port);
-			close(sockfd);
 			sleep(1);
-			continue;
+			close(sockfd);
+			goto heartbeat_send_begin;
 			CUR_INFO();
 		}
 
 		if (errno == ETIMEDOUT) {
 			// time out
 			std::cout << "heartbeat send timeout" << std::endl;
-			close(sockfd);
 			continue;
 		}
 
 		std::cout << "go to send loop" << std::endl;
-		heartbeat_send_loop(sockfd);
-		close(sockfd);
+		int ret_loop = heartbeat_send_loop(sockfd);
+		if (ret_loop < 0) {
+			close(sockfd);
+			goto heartbeat_send_begin;
+		}
+
 		std::cout << "cease sending" << std::endl;
 	}
+	pthread_cleanup_pop(1);
 	close(sockfd);
 }
 

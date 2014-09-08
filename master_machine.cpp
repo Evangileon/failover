@@ -20,6 +20,7 @@
 #include "async_handle_asterisk.h"
 #include "thread_util.h"
 #include "observer.h"
+#include "checker.h"
 
 #include "config.h"
 
@@ -58,10 +59,10 @@ int master_machine::master_status_send_loop(int wfd) {
 
         sleep(interval);
 
-        int check = checkStatus();
+        int check = checker::get_status();
         std::string whatToSend = checkResultStr(check);
 
-        if (check == CHECK_ASTERISK_DEAD) { // "down"
+        if (check == CHECK_ASTERISK_DEAD || check == CHECK_ASTERISK_SHUT_DOWN) { // "down"
             async_handle_asterisk::restart();
             restartCount++;
             if (restartCount == config::instance().get_max_restart_time()) {
@@ -69,7 +70,7 @@ int master_machine::master_status_send_loop(int wfd) {
                 restartCount = 0;
                 std::cout << "Going to shut down asterisk on this machine"
                           << std::endl;
-                //async_handle_asterisk::stop();
+                async_handle_asterisk::stop();
                 loop_ret_val = ASTERISK_STOP;
                 goto send_loop_done;
             } else {

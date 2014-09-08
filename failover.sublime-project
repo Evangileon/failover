@@ -2,7 +2,12 @@
 	"folders":
 	[
 		{
-			"path": "/home/evangileon/build/failover"
+			"follow_symlinks": true,
+			"path": "."
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/home/evangileon/build/gzip/post-process-scripts"
 		}
 	]
 }
