@@ -1,0 +1,100 @@
+#!/bin/sh
+
+#AST_CONFIG=/etc/failover
+
+FAILOVER_SBIN=/usr/sbin
+
+. /etc/init.d/functions
+
+if ! [ -x $FAILOVER_SBIN/failover ] ; then
+	echo "ERROR: $FAILOVER_SBIN/failover not found"
+	exit 0
+fi
+
+if ! [ -d $AST_CONFIG ] ; then
+	echo "ERROR: $AST_CONFIG directory not found"
+	exit 0
+fi
+
+# Full path to failover binary
+DAEMON=$FAILOVER_SBIN/failover
+
+# Full path to safe_failover script
+SAFE_FAILOVER=$FAILOVER_SBIN/safe_failover
+
+
+RETVAL=0
+
+start() {
+	# Check if Failover is already running.  If it is, then bug out, because
+	# starting safe_failover when Failover is running is very bad.
+	VERSION=`${FAILOVER_SBIN}/failover -x  2>/dev/null`
+	if [ "`echo $VERSION | cut -c 1-8`" = "Failover" ]; then
+		echo "Failover is already running."
+        echo "Fail at init.d"
+		exit 0
+	fi
+
+	# Start daemons.
+	echo -n $"Starting failover: "
+    if [ -f $SAFE_FAILOVER ] ; then
+		DAEMON=$SAFE_FAILOVER
+	fi
+
+    daemon $SAFE_FAILOVER
+
+    RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/failover
+	echo
+	return $RETVAL
+}
+
+stop() {
+	# Stop daemons.
+	if [ -f $SAFE_FAILOVER ]; then
+		# Kill safe_failover first, to prevent us from starting up 2 instances of safe_failover
+		echo -n $"Stopping safe_failover: "
+		killproc -SIGINT `basename $SAFE_FAILOVER`
+		echo
+	fi
+	echo -n $"Shutting down failover: "
+	killproc -SIGINT `basename $DAEMON`
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/failover
+	echo
+	return $RETVAL
+}
+
+restart() {
+	stop
+	start
+}
+
+reload() {
+	#$DAEMON -rx 'module reload' > /dev/null 2> /dev/null
+    echo "Nothing to do"
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart)
+	restart
+	;;
+  condrestart)
+	[ -f /var/lock/subsys/failover ] && restart || :
+	;;
+  status)
+	status failover
+	;;
+  *)
+	echo "Usage: failover {start|stop|restart|condrestart|status}"
+	exit 1
+esac
+
+exit $?
