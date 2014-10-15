@@ -9,5 +9,13 @@
 			"follow_symlinks": true,
 			"path": "/home/evangileon/build/gzip/post-process-scripts"
 		}
-	]
+	],
+
+	"settings":
+    {
+    	
+        "sublimegdb_workingdir": "/home/evangileon/build/failover",
+        // NOTE: You MUST provide --interpreter=mi for the plugin to work
+        "sublimegdb_commandline": "sudo gdb --interpreter=mi ./master"
+    }
 }

@@ -18,7 +18,7 @@ endif
 
 LIB += -pthread
 CFLAGS := $(DEBUG) $(MACRO) -Wall
-CXXFLAGS := $(CFLAGS) $(OPTIM) -std=c++0x
+CXXFLAGS := $(CFLAGS) $(OPTIM) -std=c++11
 LDFLAGS := $(DEBUG) $(LIB) $(OPTIM)
 
 RM-F := rm -f
