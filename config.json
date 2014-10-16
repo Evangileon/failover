@@ -11,14 +11,14 @@
                 
         ],
 
-        "ip_heartbeat_send_to" : "192.168.100.201",
-        "ip_heartbeat_receive" : "192.168.100.101",
+        "ip_heartbeat_receiver" : "192.168.100.201",
+        "ip_heartbeat_sender" : "192.168.100.101",
 
         //"ip_master_status_send" : "10.176.15.200",
         //"ip_standby_status_receive" : "10.176.15.201",
 
-        "ip_master_status_send_to" : "192.168.200.201",
-        "ip_standby_status_receive" : "192.168.200.101",
+        "ip_master_status_receiver" : "192.168.200.201",
+        "ip_standby_status_sender" : "192.168.200.101",
 
         "socket_failover_path" : "/var/run/failover/failover.ctl",
         "pid_failover_path" : "/var/run/failover/failover.pid",
