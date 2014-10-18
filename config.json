@@ -1,20 +1,20 @@
 {
 	"this_is_master" : true,
-        "heartbeat_direct_link" : true,
-        "status_direct_link" : true,
-        
-        "take_over_script" : [
-                
-        ],
-        
-        "fail_over_script" : [
-                
-        ],
+	"heartbeat_direct_link" : true,
+	"status_direct_link" : true,
 
-        "ip_heartbeat_receiver" : "192.168.100.201",
-        "ip_heartbeat_sender" : "192.168.100.101",
+	"take_over_script" : [
 
-        //"ip_master_status_send" : "10.176.15.200",
+	],
+
+	"fail_over_script" : [
+
+	],
+
+	"ip_heartbeat_receiver" : "192.168.100.201",
+	"ip_heartbeat_sender" : "192.168.100.101",
+
+    //"ip_master_status_send" : "10.176.15.200",
         //"ip_standby_status_receive" : "10.176.15.201",
 
         "ip_master_status_receiver" : "192.168.200.201",
@@ -32,12 +32,18 @@
         // time value
         "connect_nonblock_timeout" : 5,
         "max_restart_times" : 3,
-	"status_send_loop_interval" : 1,
-	"status_receive_loop_timeout" : 2,
-	"status_receive_timeout" : 5,
+        "status_send_loop_interval" : 1,
+        "status_receive_loop_timeout" : 2,
+        "status_receive_timeout" : 5,
 
-	"status_send_loop_timeout" : 5,
-	"heartbeat_send_loop_timeout" : 5,
-	"heartbeat_receive_loop_timeout" : 2,
-	"heartbeat_send_interval" : 1
+        "status_send_loop_timeout" : 5,
+        "heartbeat_send_loop_timeout" : 5,
+        "heartbeat_receive_loop_timeout" : 2,
+        "heartbeat_send_interval" : 1,
+
+        // check status related
+        "shell_interpreter" : "/bin/bash",
+        "status_check_script" : "/usr/sbin/ProcessChecker.sh",
+        "network_check_script" : "/usr/sbin/NetworkingChecker.sh",
+        "check_interval" : 1
 }

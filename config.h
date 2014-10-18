@@ -63,6 +63,12 @@ private:
 	unsigned heartbeat_receive_loop_timeout;
 	unsigned heartbeat_send_interval;
 
+	std::string status_check_script;
+	std::string network_check_script;
+	unsigned check_interval;
+
+	std::string shell_interpreter;
+
 	config();
 public:
 	~config() {
@@ -184,6 +190,22 @@ public:
 
 	unsigned get_status_send_loop_timeout() const {
 		return status_send_loop_timeout;
+	}
+
+	const std::string& get_network_check_script() const {
+		return network_check_script;
+	}
+
+	const std::string& get_status_check_script() const {
+		return status_check_script;
+	}
+
+	const std::string& get_shell_interpreter() const {
+		return shell_interpreter;
+	}
+
+	unsigned get_check_interval() const {
+		return check_interval;
 	}
 
 private:

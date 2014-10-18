@@ -198,9 +198,9 @@ void standby_machine::update(int flag) {
 }
 
 std::shared_ptr<standby_machine> init_standby_machine() {
-	standby_machine *sm = new standby_machine();
-	std::thread smThread(&standby_machine::status_receive, sm);
-	sm->inject_thread(smThread);
-	std::shared_ptr<standby_machine> mm_ptr(sm);
+	standby_machine *standbyMachine = new standby_machine();
+	std::thread smThread(&standby_machine::status_receive, standbyMachine);
+	standbyMachine->inject_thread(smThread);
+	std::shared_ptr<standby_machine> mm_ptr(standbyMachine);
 	return mm_ptr;
 }

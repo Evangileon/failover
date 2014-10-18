@@ -26,6 +26,7 @@ config::config() :
 	port_status_sender = 0;
 	port_status_receiver = 0;
 	connect_nonblock_timeout = 5;
+	status_receive_loop_timeout = 0;
 }
 
 void config::dump_config_file(std::string dump) const {
@@ -99,6 +100,13 @@ void config::parse() {
 	readUInt(heartbeat_send_loop_timeout, 5);
 	readUInt(heartbeat_receive_loop_timeout, 2);
 	readUInt(heartbeat_send_interval, 1);
+
+	readString(status_check_script, "/usr/sbin/ProcessChecker.sh");
+	readString(network_check_script, "/usr/sbin/NetworkingChecker.sh");
+	readUInt(check_interval, 1);
+
+	readString(shell_interpreter, "/bin/bash");
+
 }
 
 void config::update(int flag) {

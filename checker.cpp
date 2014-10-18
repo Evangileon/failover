@@ -27,8 +27,10 @@ checker::~checker() {
 }
 
 void checker::check_loop() {
+	unsigned interval = config::instance().get_check_interval();
+
 	while(1) {
-		sleep(1);
+		sleep(interval);
 		int check = checkStatus();
 		status = check;
 	}

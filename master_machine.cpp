@@ -222,9 +222,9 @@ void master_machine::update(int flag) {
 }
 
 std::shared_ptr<master_machine> init_master_machine() {
-    master_machine *mm = new master_machine();
-    std::thread mmThread(&master_machine::master_status_send, mm);
-    mm->inject_thread(mmThread);
-    std::shared_ptr<master_machine> mm_ptr(mm);
+    master_machine *masterMachine = new master_machine();
+    std::thread mmThread(&master_machine::master_status_send, masterMachine);
+    masterMachine->inject_thread(mmThread);
+    std::shared_ptr<master_machine> mm_ptr(masterMachine);
     return mm_ptr;
 }

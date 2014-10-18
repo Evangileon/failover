@@ -152,18 +152,18 @@ int main(int argc, char const *argv[]) {
 			std::cout << "This is master" << std::endl;
 			async_handle_asterisk::restart();
 
-			std::shared_ptr<master_machine> mm = init_master_machine();
+			std::shared_ptr<master_machine> masterMachine = init_master_machine();
 			// add machine instance to heartbeat observer
 			// It is an event-driven mechanism
-			hb->attach_observer(std::dynamic_pointer_cast<observer>(mm));
+			hb->attach_observer(std::dynamic_pointer_cast<observer>(masterMachine));
 			hb->attach_observer(
 					std::dynamic_pointer_cast<observer>(
 							config::instance().shared()));
 
 			// block here
-			mm->join();
+			masterMachine->join();
 
-			machine_ret = mm->get_machine_retval();
+			machine_ret = masterMachine->get_machine_retval();
 			if (machine_ret == MASTER_ASTERISK_STOP) {
 				std::cout << "yield master" << std::endl;
 				yield_master(&mas_sta);
@@ -174,16 +174,16 @@ int main(int argc, char const *argv[]) {
 			std::cout << "This is standby" << std::endl;
 			async_handle_asterisk::stop();
 
-			std::shared_ptr<standby_machine> sm = init_standby_machine();
-			hb->attach_observer(std::dynamic_pointer_cast<observer>(sm));
+			std::shared_ptr<standby_machine> standbyMachine = init_standby_machine();
+			hb->attach_observer(std::dynamic_pointer_cast<observer>(standbyMachine));
 			hb->attach_observer(
 					std::dynamic_pointer_cast<observer>(
 							config::instance().shared()));
 
 			// block here
-			sm->join();
+			standbyMachine->join();
 
-			machine_ret = sm->get_machine_retval();
+			machine_ret = standbyMachine->get_machine_retval();
 			if (machine_ret == MASTER_ASTERISK_STOP) {
 				std::cout << "seize master" << std::endl;
 				seize_master(&mas_sta);
