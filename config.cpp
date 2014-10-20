@@ -129,7 +129,7 @@ void config::init_script() {
 			Json::Value args = (*itor)["args"];
 
 			// then the args for the cmd
-			if ((*itor).isArray()) {
+			if (args.isArray()) {
 				for (Json::ValueIterator arg_itor = args.begin();
 						arg_itor != args.end(); ++arg_itor) {
 					handler.append_argument(
