@@ -91,11 +91,15 @@ int takeover_master_jobs() {
 
 	std::vector<script_handler> take_over =
 			config::instance().get_take_over_script();
+	std::ofstream debug("/home/dslab/debug.txt");
 	for (std::vector<script_handler>::iterator itor = take_over.begin();
 			itor != take_over.end(); ++itor) {
-		int err = std::system((*itor).get_full_command().c_str());
+		std::string cmd = (*itor).get_full_command();
+		debug << cmd;
+		int err = std::system(cmd.c_str());
 		ret = (err < 0) ? -1 : ret;
 	}
+	debug.close();
 	async_handle_asterisk::restart();
 	return ret;
 }
