@@ -122,16 +122,21 @@ void config::init_script() {
 			if (!(*itor).isObject()) {
 				continue;
 			}
-			std::string path = (*itor).get("path", "echo > /dev/null").asString();
+			// the absolute path of cmd
+			std::string path =
+					(*itor).get("path", "echo > /dev/null").asString();
 			script_handler handler(path);
 			Json::Value args = (*itor)["args"];
-			if (!(*itor).isArray()) {
-				continue;
+
+			// then the args for the cmd
+			if ((*itor).isArray()) {
+				for (Json::ValueIterator arg_itor = args.begin();
+						arg_itor != args.end(); ++arg_itor) {
+					handler.append_argument(
+							root.get((*arg_itor).asString(), "").asString());
+				}
 			}
-			for (Json::ValueIterator arg_itor = args.begin();
-					arg_itor != args.end(); ++arg_itor) {
-				handler.append_argument(root.get((*arg_itor).asString(), "").asString());
-			}
+
 			take_over_script.push_back(handler);
 		}
 	}
@@ -143,16 +148,18 @@ void config::init_script() {
 			if (!(*itor).isObject()) {
 				continue;
 			}
-			std::string path = (*itor).get("path", "echo > /dev/null").asString();
+			std::string path =
+					(*itor).get("path", "echo > /dev/null").asString();
 			script_handler handler(path);
 			Json::Value args = (*itor)["args"];
-			if (!(*itor).isArray()) {
-				continue;
+			if ((*itor).isArray()) {
+				for (Json::ValueIterator arg_itor = args.begin();
+						arg_itor != args.end(); ++arg_itor) {
+					handler.append_argument(
+							root.get((*arg_itor).asString(), "").asString());
+				}
 			}
-			for (Json::ValueIterator arg_itor = args.begin();
-					arg_itor != args.end(); ++arg_itor) {
-				handler.append_argument(root.get((*arg_itor).asString(), "").asString());
-			}
+
 			fail_over_script.push_back(handler);
 		}
 	}
