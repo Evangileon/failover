@@ -95,7 +95,7 @@ int takeover_master_jobs() {
 	for (std::vector<script_handler>::iterator itor = take_over.begin();
 			itor != take_over.end(); ++itor) {
 		std::string cmd = (*itor).get_full_command();
-		debug << cmd;
+		//debug << cmd;
 		int err = std::system(cmd.c_str());
 		ret = (err < 0) ? -1 : ret;
 	}
