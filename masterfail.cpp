@@ -91,7 +91,7 @@ int takeover_master_jobs() {
 
 	std::vector<script_handler> take_over =
 			config::instance().get_take_over_script();
-	std::ofstream debug("/home/dslab/debug.txt");
+	//std::ofstream debug("/home/dslab/debug.txt");
 	for (std::vector<script_handler>::iterator itor = take_over.begin();
 			itor != take_over.end(); ++itor) {
 		std::string cmd = (*itor).get_full_command();
@@ -99,7 +99,7 @@ int takeover_master_jobs() {
 		int err = std::system(cmd.c_str());
 		ret = (err < 0) ? -1 : ret;
 	}
-	debug.close();
+	//debug.close();
 	async_handle_asterisk::restart();
 	return ret;
 }
@@ -140,7 +140,7 @@ int main(int argc, char const *argv[]) {
 
 	int machine_ret = 0;
 
-	config::instance().dump_config_file("dump_config");
+	//config::instance().dump_config_file("dump_config");
 
 	// Infinite loop
 	while (1) {
@@ -156,7 +156,9 @@ int main(int argc, char const *argv[]) {
 			}
 
 			std::cout << "This is master" << std::endl;
-			async_handle_asterisk::restart();
+			takeover_master_jobs();
+			// duplicated
+			//async_handle_asterisk::restart();
 
 			std::shared_ptr<master_machine> masterMachine = init_master_machine();
 			// add machine instance to heartbeat observer
