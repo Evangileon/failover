@@ -47,8 +47,8 @@ private:
 
 	std::map<uint, std::string> ip_map;  // id 0 is the master
 
-	std::vector<std::string> take_over_script;
-	std::vector<std::string> fail_over_script;
+	std::vector<script_handler> take_over_script;
+	std::vector<script_handler> fail_over_script;
 
 	unsigned max_restart_times;
 	unsigned status_send_loop_interval;
@@ -210,6 +210,7 @@ public:
 
 private:
 	virtual void update(int flag);
+	void init_script();
 };
 
 #endif

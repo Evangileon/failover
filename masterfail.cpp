@@ -71,11 +71,12 @@ int create_socket() {
 int yield_master_jobs() {
 	int ret = 0;
 	async_handle_asterisk::stop();
-	std::vector<std::string> fail_over =
+
+	std::vector<script_handler> fail_over =
 			config::instance().get_fail_over_script();
-	for (std::vector<std::string>::iterator itor = fail_over.begin();
+	for (std::vector<script_handler>::iterator itor = fail_over.begin();
 			itor != fail_over.end(); ++itor) {
-		int err = std::system((*itor).c_str());
+		int err = std::system((*itor).get_full_command().c_str());
 		ret = (err < 0) ? -1 : ret;
 	}
 	return ret;
@@ -87,14 +88,15 @@ int yield_master_jobs() {
  */
 int takeover_master_jobs() {
 	int ret = 0;
-	async_handle_asterisk::restart();
-	std::vector<std::string> take_over =
+
+	std::vector<script_handler> take_over =
 			config::instance().get_take_over_script();
-	for (std::vector<std::string>::iterator itor = take_over.begin();
+	for (std::vector<script_handler>::iterator itor = take_over.begin();
 			itor != take_over.end(); ++itor) {
-		int err = std::system((*itor).c_str());
+		int err = std::system((*itor).get_full_command().c_str());
 		ret = (err < 0) ? -1 : ret;
 	}
+	async_handle_asterisk::restart();
 	return ret;
 }
 

@@ -9,8 +9,6 @@
 #include "util.h"
 #include "config.h"
 
-
-
 #define readInt(name, dfalt) name = root.get(#name, (dfalt)).asInt()
 #define readUInt(name, dfalt) name = root.get(#name, (dfalt)).asUInt()
 #define readString(name, dfalt) name = root.get(#name, (dfalt)).asString()
@@ -45,7 +43,8 @@ void config::parse() {
 		// report to the user the failure and their locations in the document.
 		std::cout << "Failed to parse configuration\n"
 				<< reader.getFormattedErrorMessages();
-		CUR_ERR();
+		CUR_ERR()
+		;
 		return;
 	}
 	this->root = root;
@@ -75,22 +74,6 @@ void config::parse() {
 
 	readUInt(connect_nonblock_timeout, 5);
 
-	Json::Value take_over = root["take_over_script"];
-	if (take_over.isArray()) {
-		for (Json::ValueIterator itor = take_over.begin();
-				itor != take_over.end(); ++itor) {
-			take_over_script.push_back((*itor).asString());
-		}
-	}
-
-	Json::Value fail_over = root["fail_over_script"];
-	if (fail_over.isArray()) {
-		for (Json::ValueIterator itor = fail_over.begin();
-				itor != fail_over.end(); ++itor) {
-			fail_over_script.push_back((*itor).asString());
-		}
-	}
-
 	readUInt(max_restart_times, 3);
 	readUInt(status_send_loop_interval, 1);
 	readUInt(status_receive_loop_timeout, 2);
@@ -107,6 +90,10 @@ void config::parse() {
 
 	readString(shell_interpreter, "/bin/bash");
 
+	// initialize take over and fail over scripts
+	// this method must be the last to be executed because it depends on the variable
+	// that previously defined
+	init_script();
 }
 
 void config::update(int flag) {
@@ -123,4 +110,49 @@ void config::update(int flag) {
 std::shared_ptr<config> config::shared() {
 	std::shared_ptr<config> px(this, null_deleter());
 	return px;
+}
+
+void config::init_script() {
+	Json::Value take_over = root["take_over_script"];
+	if (take_over.isArray()) {
+		for (Json::ValueIterator itor = take_over.begin();
+				itor != take_over.end(); ++itor) {
+			//take_over_script.push_back((*itor).asString());
+			if (!(*itor).isObject()) {
+				continue;
+			}
+			std::string path = (*itor).get("path", "echo > /dev/null");
+			script_handler handler(path);
+			Json::Value args = (*itor)["args"];
+			if (!(*itor).isArray()) {
+				continue;
+			}
+			for (Json::ValueIterator arg_itor = args.begin();
+					arg_itor != args.end(); ++arg_itor) {
+				handler.append_argument(root.get((*arg_itor).asString(), "").asString());
+			}
+			take_over_script.push_back(handler);
+		}
+	}
+
+	Json::Value fail_over = root["fail_over_script"];
+	if (fail_over.isArray()) {
+		for (Json::ValueIterator itor = fail_over.begin();
+				itor != fail_over.end(); ++itor) {
+			if (!(*itor).isObject()) {
+				continue;
+			}
+			std::string path = (*itor).get("path", "echo > /dev/null");
+			script_handler handler(path);
+			Json::Value args = (*itor)["args"];
+			if (!(*itor).isArray()) {
+				continue;
+			}
+			for (Json::ValueIterator arg_itor = args.begin();
+					arg_itor != args.end(); ++arg_itor) {
+				handler.append_argument(root.get((*arg_itor).asString(), "").asString());
+			}
+			fail_over_script.push_back(handler);
+		}
+	}
 }

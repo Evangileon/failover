@@ -3,12 +3,25 @@
 	"heartbeat_direct_link" : true,
 	"status_direct_link" : true,
 
-	"take_over_script" : [
+	"master_asterisk_ip" : "10.176.15.78",
+	"standby_asterisk_ip" : "10.176.15.79",
 
+	"take_over_script" : [
+		{
+			"path" : "/usr/sbin/",
+			"args" : [
+				"master_asterisk_ip"
+			]
+		}
 	],
 
 	"fail_over_script" : [
-
+		{
+			"path" : "/usr/sbin/",
+			"args" : [
+				"standby_asterisk_ip"
+			]
+		}
 	],
 
 	"ip_heartbeat_receiver" : "192.168.100.201",
