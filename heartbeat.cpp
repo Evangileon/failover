@@ -148,7 +148,7 @@ void heartbeat::heartbeat_receive() {
 void heartbeat::heartbeat_send() {
 	heartbeat_send_thread_id = std::this_thread::get_id();
 
-	int sockfd;
+	int sockfd = 0;
 
 	char receiver_addr[20];
 	std::string receiver_addr_s =
