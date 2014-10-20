@@ -11,6 +11,7 @@
 #include "json/json.h"
 
 #include "observer.h"
+#include "script_handler.h"
 
 struct null_deleter {
 	void operator()(void const *) const {
@@ -148,11 +149,11 @@ public:
 
 	void dump_config_file(std::string) const;
 
-	const std::vector<std::string>& get_fail_over_script() const {
+	const std::vector<script_handler>& get_fail_over_script() const {
 		return fail_over_script;
 	}
 
-	const std::vector<std::string>& get_take_over_script() const {
+	const std::vector<script_handler>& get_take_over_script() const {
 		return take_over_script;
 	}
 

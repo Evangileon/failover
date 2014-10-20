@@ -8,6 +8,7 @@
 
 #include "util.h"
 #include "config.h"
+#include "script_handler.h"
 
 #define readInt(name, dfalt) name = root.get(#name, (dfalt)).asInt()
 #define readUInt(name, dfalt) name = root.get(#name, (dfalt)).asUInt()
@@ -121,7 +122,7 @@ void config::init_script() {
 			if (!(*itor).isObject()) {
 				continue;
 			}
-			std::string path = (*itor).get("path", "echo > /dev/null");
+			std::string path = (*itor).get("path", "echo > /dev/null").asString();
 			script_handler handler(path);
 			Json::Value args = (*itor)["args"];
 			if (!(*itor).isArray()) {
@@ -142,7 +143,7 @@ void config::init_script() {
 			if (!(*itor).isObject()) {
 				continue;
 			}
-			std::string path = (*itor).get("path", "echo > /dev/null");
+			std::string path = (*itor).get("path", "echo > /dev/null").asString();
 			script_handler handler(path);
 			Json::Value args = (*itor)["args"];
 			if (!(*itor).isArray()) {
