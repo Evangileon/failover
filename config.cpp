@@ -152,7 +152,7 @@ void config::init_script() {
 					(*itor).get("path", "echo > /dev/null").asString();
 			script_handler handler(path);
 			Json::Value args = (*itor)["args"];
-			if ((*itor).isArray()) {
+			if (args.isArray()) {
 				for (Json::ValueIterator arg_itor = args.begin();
 						arg_itor != args.end(); ++arg_itor) {
 					handler.append_argument(
