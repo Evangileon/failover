@@ -9,6 +9,7 @@
 
 #include "checker.h"
 #include "status_check.h"
+#include "config.h"
 
 checker::checker() {
 	// TODO Auto-generated constructor stub
